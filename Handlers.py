@@ -19,3 +19,4 @@ class JournalQueryHandler(QueryHandler):
 class CategoryQueryHandler(QueryHandler):
     pass
 
+#test
