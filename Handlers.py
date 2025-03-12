@@ -1,8 +1,20 @@
 class Handler(object):
-    pass
+    def __init__(self, dbPathOrUrl):
+        self.dbPathOrUrl = dbPathOrUrl
+    
+    def getDbPathOrUrl(self):
+        return self.dbPathOrUrl
+
+    def setDbPathOrUrl(self, pathOrUrl):
+        self.dbPathOrUrl = pathOrUrl
+        return True
 
 class UploadHandler(Handler):
-    pass
+    def __init__(self, dbPathOrUrl):
+        super().__init__(dbPathOrUrl)
+
+    def pushDataToDb(self, path):
+        pass
 
 class JournalUploadHandler(UploadHandler):
     pass
