@@ -39,18 +39,19 @@ class CategoryUploadHandler(UploadHandler):
         with cursorToDb:
             # Creating the tables
             cursorToDb.execute("""
-            CREATE TABLE Journals (
+                               
+            CREATE TABLE journals (
                 journal_id PRIMARY KEY,
                 issn UNIQUE
             );
 
-            CREATE TABLE Categories (
+            CREATE TABLE categories (
                 category_id,
                 category_name UNIQUE,
                 quartile
             );
 
-            CREATE TABLE Areas (
+            CREATE TABLE areas (
                 area_id INT AUTO_INCREMENT PRIMARY KEY,
                 area_name VARCHAR(255) UNIQUE
             );
@@ -97,28 +98,10 @@ class CategoryUploadHandler(UploadHandler):
 
             # save the areas
         #    for area in areas:
-                #save the areas
-
-
+                # save the areas
 
         
         return True
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
     
     def pushDataToDb(self, path):
         # this method is to load the json file into a dataframe that we will adjust using the method addTables
