@@ -24,7 +24,7 @@ class UploadHandler(Handler):
 class JournalUploadHandler(UploadHandler):
     def __init__(self, dbPathOrUrl):
        #create graph to hold journal triples
-       self.graph=rdf.Graph()
+       self.graph=rdf.Graph(identifier=rdf.URIRef('https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph'))
       
        #add URI for journal class
        self.Journal = "https://schema.org/Periodical"
@@ -63,9 +63,7 @@ class JournalUploadHandler(UploadHandler):
            self.graph.add((subj, self.title, rdf.Literal(row["Journal title"])))
 
            #Make seperate triples for each language
-           #self.graph.add((subj, self.language, rdf.Literal(row['Languages'])))
-           for lan in row['Languages'].split(', '):
-               self.graph.add((subj, self.language, rdf.Literal(lan)))
+           self.graph.add((subj, self.language, rdf.Literal(row['Languages'])))
 
            self.graph.add((subj, self.publisher, rdf.Literal(row["Publisher"])))
            self.graph.add((subj, self.seal, rdf.Literal(row["DOAJ Seal"])))
@@ -80,26 +78,58 @@ class JournalUploadHandler(UploadHandler):
         store = SPARQLUpdateStore()
         #Open in terminal: java -server -Xmx1g -jar blazegraph.jar
 
-        # self.cleanData(df)
+        doaj_graph_uri = rdf.URIRef('https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph')
+
         self.addTriples(self.cleanData(df))
 
+        #Open triple store 
         store.open((self.dbPathOrUrl, self.dbPathOrUrl))
 
+        #Add triples to triple store using ConjunctiveGraph 
+        #ConjunctiveGraph stores a collection (dataset) of the graphs in a triplestore, the default graph and any name graph 
+        triplestore_ds = rdf.ConjunctiveGraph(store=store)
+        #With the graph_uri store a specific named graph (context)
+        doaj_graph = triplestore_ds.get_context(doaj_graph_uri)
+
         for triple in self.graph.triples((None, None, None)):
-           store.add(triple)
-        store.close()
+           doaj_graph.add(triple)
+        triplestore_ds.close()
 
         print('Triples added to triplestore')
         return True
 
+    
 class CategoryUploadHandler(UploadHandler):
     pass
 
 class QueryHandler(Handler):
-    pass
+    def __init__(self, dbPathOrUrl):
+        super().__init__(dbPathOrUrl)
+    
+    def getById(self, id):
+        pass
 
 class JournalQueryHandler(QueryHandler):
-    pass
+    def __init__(self, dbPathOrUrl):
+        super().__init__(dbPathOrUrl)
+
+    def getAllJournals(self):
+        pass
+
+    def getJournalsWithTitle(self, partialTitle):
+        pass
+
+    def getJournalsPublishedBy(self, partialName):
+        pass
+
+    def getJournalsWithLicense(self, licenses):
+        pass
+
+    def getJournalsWithAPC(self):
+        pass
+
+    def getJournalsWithDOAJSeal(self):
+        pass
 
 class CategoryQueryHandler(QueryHandler):
     pass
