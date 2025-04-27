@@ -41,44 +41,66 @@ class JournalUploadHandler(UploadHandler):
 
        super().__init__(dbPathOrUrl)
 
-    def cleanData(self,df):
+    def getLastUsedIndexFromMaster(self, master_csv_path):
+        try:
+            df_master = pd.read_csv(master_csv_path)
+            if 'internal_id' in df_master.columns:
+                internal_id = df_master['journal_id'].str.extract(r'journal-(\d+)')[0].dropna().astype(int)
+                return internal_id.max() if not internal_id.empty else -1
+            else:
+                return -1
+        except FileNotFoundError:
+            return -1
+    
+    def cleanData(self, new_data_df):
         #Make column names shorter for readability 
-        df = df.rename(columns={'Journal ISSN (print version)':'Journal ISSN', 
+        new_data_df = new_data_df.rename(columns={'Journal ISSN (print version)':'Journal ISSN', 
                                 'Journal EISSN (online version)':'Journal EISSN',
                                 'Languages in which the journal accepts manuscripts':'Languages'})
         #change null to ''
-        df = df.fillna('')
+        new_data_df = new_data_df.fillna('')
 
         #drop any row with absolutely no id 
-        df = df[((df['Journal ISSN'] != '') | (df['Journal EISSN'] != ''))]
+        new_data_df = new_data_df[((new_data_df['Journal ISSN'] != '') | (new_data_df['Journal EISSN'] != ''))]
 
         print('Data cleaned')
-        return df
+        return new_data_df
     
-    def addTriples(self,df):  
-        for idx, row in df.iterrows():
-           local_id = "journal-" + str(idx)
-           subj = rdf.URIRef(self.Journal + local_id)
-           self.graph.add((subj, self.id_issn, rdf.Literal(row['Journal ISSN'])))  
-           self.graph.add((subj, self.id_eissn, rdf.Literal(row["Journal EISSN"])))
-           self.graph.add((subj, self.title, rdf.Literal(row["Journal title"])))
-           self.graph.add((subj, self.language, rdf.Literal(row['Languages'])))
-           self.graph.add((subj, self.publisher, rdf.Literal(row["Publisher"])))
-           self.graph.add((subj, self.seal, rdf.Literal(row["DOAJ Seal"])))
-           self.graph.add((subj, self.license, rdf.Literal(row["Journal license"])))
-           self.graph.add((subj, self.apc, rdf.Literal(row["APC"])))
+    def addTriples(self, new_data_df, start_idx=0):  
+        new_ids = []
+        for i, (_, row) in enumerate(new_data_df.iterrows(), start=start_idx):
+            local_id = f"journal-{i}"
+            new_ids.append(local_id)
+            subj = rdf.URIRef(self.Journal + local_id)
+            self.graph.add((subj, self.id_issn, rdf.Literal(row['Journal ISSN'])))  
+            self.graph.add((subj, self.id_eissn, rdf.Literal(row["Journal EISSN"])))
+            self.graph.add((subj, self.title, rdf.Literal(row["Journal title"])))
+            self.graph.add((subj, self.language, rdf.Literal(row['Languages'])))
+            self.graph.add((subj, self.publisher, rdf.Literal(row["Publisher"])))
+            self.graph.add((subj, self.seal, rdf.Literal(row["DOAJ Seal"])))
+            self.graph.add((subj, self.license, rdf.Literal(row["Journal license"])))
+            self.graph.add((subj, self.apc, rdf.Literal(row["APC"])))
         
+        new_data_df['internal_id'] = new_ids  # Track assigned IDs
         print('Graph populated')
-        return True       
+
+        return new_data_df      
    
-    def pushDataToDb(self, path):
-        df = pd.read_csv(path)
+    def pushDataToDb(self, new_data_path, master_csv_path):
+        new_data_df = pd.read_csv(new_data_path)
         store = SPARQLUpdateStore()
         #Open in terminal: java -server -Xmx1g -jar blazegraph.jar
 
         doaj_graph_uri = rdf.URIRef('https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph')
 
-        self.addTriples(self.cleanData(df))
+        # Get the last used journal_id from the master CSV
+        last_index = self.getLastUsedIndexFromMaster(master_csv_path)
+
+        #clean data
+        new_data_df = self.cleanData(new_data_df)
+
+        # Add triples and assign journal_ids
+        df_with_ids = self.addTriples(new_data_df, start_idx=last_index + 1)
 
         #Open triple store 
         store.open((self.dbPathOrUrl, self.dbPathOrUrl))
@@ -94,6 +116,17 @@ class JournalUploadHandler(UploadHandler):
         triplestore_ds.close()
 
         print('Triples added to triplestore')
+
+        #Append new data to master CSV file
+        try:
+            master_df = pd.read_csv(master_csv_path)
+            updated_master_df = pd.concat([master_df, df_with_ids], ignore_index=True)
+        except FileNotFoundError:
+            updated_master_df = df_with_ids
+
+        updated_master_df.to_csv(master_csv_path, index=False)
+        print('Master CSV updated with new journals')
+
         return True
 
     
@@ -114,6 +147,19 @@ class JournalQueryHandler(QueryHandler):
         self.fixed_graph = "GRAPH <https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph>"
         self.fixed_where = "?journal schema:issn ?issn; schema:eissn ?eissn; schema:name ?title; schema:publisher ?publisher; schema:language ?language; schema:license ?license; schema:award ?seal; schema:apc ?apc ."
 
+    def getById(self, id):
+        query = f"""
+        {self.fixed_schema_select}
+        WHERE {{ {self.fixed_graph}
+        {{ {self.fixed_where}
+            FILTER (?issn = "{id}" || ?eissn = "{id}")
+        }}
+        }}     
+        """
+        journal_byId_df = get(self.dbPathOrUrl, query, True)
+
+        return journal_byId_df
+    
     def getAllJournals(self):
         query = f"""
         {self.fixed_schema_select}
