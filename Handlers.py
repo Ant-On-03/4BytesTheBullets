@@ -2,6 +2,7 @@ import rdflib as rdf
 import pandas as pd
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 #Open in terminal: java -server -Xmx1g -jar blazegraph.jar
+from sparql_dataframe import get
 
 class Handler(object):
     def __init__(self, dbPathOrUrl):
@@ -61,10 +62,7 @@ class JournalUploadHandler(UploadHandler):
            self.graph.add((subj, self.id_issn, rdf.Literal(row['Journal ISSN'])))  
            self.graph.add((subj, self.id_eissn, rdf.Literal(row["Journal EISSN"])))
            self.graph.add((subj, self.title, rdf.Literal(row["Journal title"])))
-
-           #Make seperate triples for each language
            self.graph.add((subj, self.language, rdf.Literal(row['Languages'])))
-
            self.graph.add((subj, self.publisher, rdf.Literal(row["Publisher"])))
            self.graph.add((subj, self.seal, rdf.Literal(row["DOAJ Seal"])))
            self.graph.add((subj, self.license, rdf.Literal(row["Journal license"])))
@@ -85,9 +83,9 @@ class JournalUploadHandler(UploadHandler):
         #Open triple store 
         store.open((self.dbPathOrUrl, self.dbPathOrUrl))
 
-        #Add triples to triple store using ConjunctiveGraph 
-        #ConjunctiveGraph stores a collection (dataset) of the graphs in a triplestore, the default graph and any name graph 
-        triplestore_ds = rdf.ConjunctiveGraph(store=store)
+        #Add triples to triple store using Dataset 
+        #Dataset stores a collection (dataset) of the graphs in a triplestore, the default graph and any name graph 
+        triplestore_ds = rdf.Dataset(store=store)
         #With the graph_uri store a specific named graph (context)
         doaj_graph = triplestore_ds.get_context(doaj_graph_uri)
 
@@ -117,13 +115,51 @@ class JournalQueryHandler(QueryHandler):
         self.fixed_where = "?journal schema:issn ?issn; schema:eissn ?eissn; schema:name ?title; schema:publisher ?publisher; schema:language ?language; schema:license ?license; schema:award ?seal; schema:apc ?apc ."
 
     def getAllJournals(self):
-        pass
+        query = f"""
+        {self.fixed_schema_select}
+        WHERE {{ {self.fixed_graph}
+        {{ {self.fixed_where}
+        }}
+        }}     
+        """
+        journals_df = get(self.dbPathOrUrl, query, True)
+        
+        return journals_df
 
     def getJournalsWithTitle(self, partialTitle):
-        pass
+        # Escape double quotes in partialTitle to avoid breaking the SPARQL query
+        safe_partialTitle = partialTitle.replace('"', '\\"')
+
+        query = f"""
+        {self.fixed_schema_select}
+        WHERE {{ {self.fixed_graph}
+        {{ {self.fixed_where}
+            FILTER (CONTAINS(LCASE(str(?title)), LCASE("{safe_partialTitle}")))
+        }}
+        }}     
+        """
+
+        journals_byTitle_df = get(self.dbPathOrUrl, query, True)
+            
+        return journals_byTitle_df
+
 
     def getJournalsPublishedBy(self, partialName):
-        pass
+        # Escape double quotes in partialName to avoid breaking the SPARQL query
+        safe_partialName = partialName.replace('"', '\\"')
+
+        query = f"""
+        {self.fixed_schema_select}
+        WHERE {{ {self.fixed_graph}
+        {{ {self.fixed_where}
+            FILTER (CONTAINS(LCASE(str(?publisher)), LCASE("{safe_partialName}")))
+        }}
+        }}     
+        """
+
+        journals_byPub_df = get(self.dbPathOrUrl, query, True)
+        
+        return journals_byPub_df
 
     def getJournalsWithLicense(self, licenses):
         import itertools
@@ -156,9 +192,9 @@ class JournalQueryHandler(QueryHandler):
         }}
         }}     
         """
-        df_sparql = get(self.dbPathOrUrl, query, True)
-        print(f"Jounals with license of {licenses}: ", df_sparql)
-        return True
+        journals_withLicense_df = get(self.dbPathOrUrl, query, True)
+        
+        return journals_withLicense_df
 
     def getJournalsWithAPC(self):
         query = f"""
@@ -169,9 +205,9 @@ class JournalQueryHandler(QueryHandler):
         }}
         }}     
         """
-        df_sparql = get(self.dbPathOrUrl, query, True)
-        print("Jounals with APC: ", df_sparql)
-        return df_sparql
+        journals_withAPC_df = get(self.dbPathOrUrl, query, True)
+        
+        return journals_withAPC_df
 
     def getJournalsWithDOAJSeal(self):
         query = f"""
@@ -182,9 +218,8 @@ class JournalQueryHandler(QueryHandler):
         }}
         }}     
         """
-        df_sparql = get(self.dbPathOrUrl, query, True)
-        print("Jounals with DOAJ Seal: ", df_sparql)
-        return df_sparql
+        journals_withSeal_df = get(self.dbPathOrUrl, query, True)
+        return journals_withSeal_df
 
 class CategoryQueryHandler(QueryHandler):
     pass
