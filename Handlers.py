@@ -112,6 +112,9 @@ class QueryHandler(Handler):
 class JournalQueryHandler(QueryHandler):
     def __init__(self, dbPathOrUrl):
         super().__init__(dbPathOrUrl)
+        self.fixed_schema_select = "PREFIX schema:<https://schema.org/> SELECT ?journal ?issn ?eissn ?title ?publisher ?language ?license ?seal ?apc"
+        self.fixed_graph = "GRAPH <https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph>"
+        self.fixed_where = "?journal schema:issn ?issn; schema:eissn ?eissn; schema:name ?title; schema:publisher ?publisher; schema:language ?language; schema:license ?license; schema:award ?seal; schema:apc ?apc ."
 
     def getAllJournals(self):
         pass
@@ -123,13 +126,65 @@ class JournalQueryHandler(QueryHandler):
         pass
 
     def getJournalsWithLicense(self, licenses):
-        pass
+        import itertools
+        def query_generator(licenses):
+        
+        # create a list from the set to generate all combination patterns
+            terms = list(licenses)
+        
+        # create all patterns of combinations
+            patterns  = list(itertools.permutations(terms))
+
+        # convert patterns to string 
+            pattern_to_string = [", ".join(p) for p in patterns]
+        
+        # create a regex expression for exact match
+            regex = "^(" + "|".join(pattern_to_string) + ")$"
+
+        # create a SPARQL FILTER with regex
+            regex_filter = f'FILTER(REGEX(?license, "{regex}"))'
+            return regex_filter
+
+    # run function and store result
+        regex_query = query_generator(licenses)
+    
+        query = f"""
+        {self.fixed_schema_select}
+        WHERE {{ {self.fixed_graph}
+        {{ {self.fixed_where}
+            {regex_query} 
+        }}
+        }}     
+        """
+        df_sparql = get(self.dbPathOrUrl, query, True)
+        print(f"Jounals with license of {licenses}: ", df_sparql)
+        return True
 
     def getJournalsWithAPC(self):
-        pass
+        query = f"""
+        {self.fixed_schema_select}
+        WHERE {{ {self.fixed_graph}  
+        {{ {self.fixed_where}
+            FILTER (?apc = "Yes")   
+        }}
+        }}     
+        """
+        df_sparql = get(self.dbPathOrUrl, query, True)
+        print("Jounals with APC: ", df_sparql)
+        return df_sparql
 
     def getJournalsWithDOAJSeal(self):
-        pass
+        query = f"""
+        {self.fixed_schema_select}
+        WHERE {{ {self.fixed_graph}  
+        {{ {self.fixed_where}
+            FILTER (?seal = "Yes")   
+        }}
+        }}     
+        """
+        df_sparql = get(self.dbPathOrUrl, query, True)
+        print("Jounals with DOAJ Seal: ", df_sparql)
+        return df_sparql
 
 class CategoryQueryHandler(QueryHandler):
     pass
