@@ -17,7 +17,7 @@ df = pd.read_json(filePath)
 
 
 
-jsontest = df[:30].copy()
+jsontest = df.copy()
 
 # add indentifyers columns to the dataframe
 
@@ -77,19 +77,52 @@ areas_journals_dataframe.rename(columns={"areas": "area_id"}, inplace=True)
 print("AREAS_JOURNALS DATAFRAME")
 print(areas_journals_dataframe)
 
-## ------------------------------------------- CATEGORIES DATAFRAME ------------------------------------------- ##
+## ------------------------------------------- CATEGORIES_QUARTILES DATAFRAME ------------------------------------------- ##
 
 # we create a table with ALL the DICTIONATIES of the CATEGORIES
-dummy_dataframe = jsontest[['categories']].explode("categories")
+dummy_dataframe = df[['categories']].explode("categories")
 # we normalize the dataframe into a flat table
-categories_dataframe = pd.json_normalize(dummy_dataframe['categories'])
+categories_quartiles_dataframe = pd.json_normalize(dummy_dataframe['categories'])
+categories_quartiles_dataframe.rename(columns={"id": "category_id"}, inplace=True)
+
+categories_quartiles_dataframe = categories_quartiles_dataframe.drop_duplicates(subset=["category_id","quartile"])
 
 
-categories_dataframe.rename(columns={"id": "category_id"}, inplace=True)
+## ------------------------------------------- CATEGORIES DATAFRAME ------------------------------------------- ##
 
+
+## DROP DUPLICATES
+categories_dataframe = categories_quartiles_dataframe["category_id"].copy()
+categories_dataframe = pd.DataFrame(categories_dataframe.drop_duplicates(), columns = ["category_id"])
+
+# categories_dataframe = categories_dataframe.drop_duplicates(subset=["category_id"])
+
+# categories_dataframe = categories_dataframe.drop_duplicates(subset=["category_id"])
+
+
+
+print()
+print()
+print()
+print("CATEGORIES_QUARTILES DATAFRAME")
+print(categories_quartiles_dataframe)
+print()
+print()
+print()
+
+print()
+print()
+print()
 
 print("CATEGORIES DATAFRAME")
 print(categories_dataframe)
+
+print()
+
+# categories_dataframe = categories_dataframe.drop_duplicates(subset=["category_id"])
+print()
+print()
+print()
 
 ## ------------------------------------------- JOURNALS_CATEGORIES DATAFRAME ------------------------------------------- ##
 

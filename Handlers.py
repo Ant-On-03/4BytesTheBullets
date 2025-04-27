@@ -91,6 +91,17 @@ class CategoryUploadHandler(UploadHandler):
 
                         """)
         
+        cursorToDb.execute("""
+                            
+        CREATE TABLE categories_quartiles (
+            category_id TEXT,
+            quartile TEXT,
+            PRIMARY KEY (category_id, quartile),
+            FOREIGN KEY (category_id) REFERENCES categories(category_id)
+        );
+
+                        """)
+        
 
         # Commit the changes and close the connection
         connectionToDb.commit()
@@ -140,16 +151,27 @@ class CategoryUploadHandler(UploadHandler):
         areas_journals_dataframe = areas_journals_dataframe.explode("areas")
         areas_journals_dataframe.rename(columns={"areas": "area_id"}, inplace=True)
 
-        ## ------------------------------------------- CATEGORIES DATAFRAME ------------------------------------------- ##
+        ## ------------------------------------------- CATEGORIES_QUARTILES DATAFRAME ------------------------------------------- ##
 
         # we create a table with ALL the DICTIONATIES of the CATEGORIES
         dummy_dataframe = df[['categories']].explode("categories")
         # we normalize the dataframe into a flat table
-        categories_dataframe = pd.json_normalize(dummy_dataframe['categories'])
-        categories_dataframe.rename(columns={"id": "category_id"}, inplace=True)
+        categories_quartiles_dataframe = pd.json_normalize(dummy_dataframe['categories'])
+        categories_quartiles_dataframe.rename(columns={"id": "category_id"}, inplace=True)
 
         ## DROP DUPLICATES
-        categories_dataframe = categories_dataframe.drop_duplicates(subset=["category_id"])
+        categories_quartiles_dataframe = categories_quartiles_dataframe.drop_duplicates(subset=["category_id","quartile"])
+
+        ## ------------------------------------------- CATEGORIES DATAFRAME ------------------------------------------- ##
+
+
+        ## DROP DUPLICATES
+        categories_dataframe = categories_quartiles_dataframe["category_id"].copy()
+        categories_dataframe = categories_dataframe.drop_duplicates()
+        categories_dataframe = pd.DataFrame(categories_dataframe, columns = ["category_id"])
+
+        # categories_dataframe = categories_dataframe.drop_duplicates(subset=["category_id"])
+
 
         ## ------------------------------------------- JOURNALS_CATEGORIES DATAFRAME ------------------------------------------- ##
 
@@ -178,10 +200,16 @@ class CategoryUploadHandler(UploadHandler):
             
         for idx, row in categories_dataframe.iterrows():
             cursorToDb.execute("""
-                               INSERT INTO categories (category_id, quartile) 
+                               INSERT INTO categories (category_id) 
+                               VALUES (?);
+                               """, (row["category_id"],))
+            
+        for idx, row in categories_quartiles_dataframe.iterrows():
+            cursorToDb.execute("""
+                               INSERT INTO categories_quartiles (category_id, quartile) 
                                VALUES (?, ?);
                                """, (row["category_id"], row["quartile"]))
-        
+            
         for idx, row in area_df.iterrows():
             cursorToDb.execute("""
                                INSERT INTO areas (area_id) 
