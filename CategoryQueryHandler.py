@@ -28,18 +28,29 @@ class CategoryQueryHandler(QueryHandler):
     def getById(self, id:str) -> DataFrame:
 
         
-        # return all the areas in a database, with no repetitions.
+        # RETURN A JOIN OF ALL THE TABLES THAT HAVE THE ID OF THE JOURNAL.
+        # This is the query that will be used to get the journal with the id given.
         conn = connect(self.dbPathOrUrl)
         cursor = conn.cursor()
 
-        query = "SELECT issn, eissn,  FROM areas;"
-
-        cursor.execute(query)
+        query = """
         
+        
+        SELECT j.issn, j.eissn, jc.category_id, cq.quartile, aj.area_id
+        FROM journals AS j
+        JOIN journals_categories AS jc ON j.journal_id = jc.journal_id
+        JOIN categories_quartiles AS cq ON jc.category_id = cq.category_id
+        JOIN areas_journals AS aj ON j.journal_id = aj.journal_id
+        WHERE j.issn = ? | j.eissn = ?;
+    
+        
+        """
 
+        cursor.execute(query, (id, id))
 
-        joruanls = cursor.fetchall()
-        df = pd.DataFrame(journals, columns=["journal_id"])
+        
+        journals = cursor.fetchall()
+        df = pd.DataFrame(journals)
 
         conn.close()
         
@@ -165,9 +176,12 @@ class CategoryQueryHandler(QueryHandler):
                     })
 
                     """ 
+        print(query)
 
         # We use said query on the database.
         cursor.execute(query, tuple(area_ids))
+
+        print("cursor.fetchall():", cursor.fetchall())
         
         # We turn it into a Dataframe
         categories = cursor.fetchall()
@@ -238,5 +252,11 @@ if __name__ == "__main__":
     print("AREAS ASSIGNED TO CATEGORIES")
     print("length OF THEM:", len(areas))
     print(areas)
+
+    getById = CategoryQueryHandler.getById("0010-0285")
+    print("GET BY ID")
+    print("length OF THEM:", len(getById))
+    print(getById)
+
 
 
