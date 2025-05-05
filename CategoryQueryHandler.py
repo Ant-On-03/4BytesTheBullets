@@ -36,19 +36,21 @@ class CategoryQueryHandler(QueryHandler):
         query = """
         
         
-        SELECT j.issn, j.eissn, jc.category_id, cq.quartile, aj.area_id
+        SELECT DISTINCT j.issn, j.eissn, jc.category_id, cq.quartile, aj.area_id 
         FROM journals AS j
         JOIN journals_categories AS jc ON j.journal_id = jc.journal_id
         JOIN categories_quartiles AS cq ON jc.category_id = cq.category_id
         JOIN areas_journals AS aj ON j.journal_id = aj.journal_id
-        WHERE j.issn = ? | j.eissn = ?;
+        WHERE (j.issn = ? OR j.eissn = ?);
     
         
         """
 
         cursor.execute(query, (id, id))
 
-        
+        print("query:", query)
+
+
         journals = cursor.fetchall()
         df = pd.DataFrame(journals)
 
@@ -253,9 +255,14 @@ if __name__ == "__main__":
     print("length OF THEM:", len(areas))
     print(areas)
 
-    getById = CategoryQueryHandler.getById("0010-0285")
+
+
+
+    getById = CategoryQueryHandler.getById("19")
     print("GET BY ID")
     print("length OF THEM:", len(getById))
+    # LETS PRINT ALL ROWS IN THE DATAFRAME.
+    pd.set_option('display.max_rows', None)
     print(getById)
 
 
