@@ -25,7 +25,6 @@ class UploadHandler(Handler):
 
 
 
-
 class CategoryUploadHandler(UploadHandler):
 
     def __init__(self, dbPathOrUrl):
@@ -52,15 +51,6 @@ class CategoryUploadHandler(UploadHandler):
             EISSN TEXT
         );""")
 
-        # Creating the tables
-        cursorToDb.execute("""
-                            
-        CREATE TABLE categories (
-            category_id TEXT PRIMARY KEY,
-            quartile TEXT
-        );
-        """)
-
         cursorToDb.execute("""
                             
         CREATE TABLE areas (
@@ -68,14 +58,15 @@ class CategoryUploadHandler(UploadHandler):
         );
         """)
 
+        # FOR US CATEGORIES IS A WEAK ENTITY, THAT DEPENDS ON THE JOURNAL ID.
         cursorToDb.execute("""
                             
-        CREATE TABLE journals_categories (
+        CREATE TABLE categories (
             journal_id TEXT,
             category_id TEXT,
+            quartile TEXT,
             PRIMARY KEY (journal_id, category_id),
-            FOREIGN KEY (journal_id) REFERENCES journals(journal_id),
-            FOREIGN KEY (category_id) REFERENCES categories(category_id)
+            FOREIGN KEY (journal_id) REFERENCES journals(journal_id)
         );
 
         """)
@@ -89,19 +80,7 @@ class CategoryUploadHandler(UploadHandler):
             FOREIGN KEY (area_id) REFERENCES areas(area_id)
         );
 
-                        """)
-        
-        cursorToDb.execute("""
-                            
-        CREATE TABLE categories_quartiles (
-            category_id TEXT,
-            quartile TEXT,
-            PRIMARY KEY (category_id, quartile),
-            FOREIGN KEY (category_id) REFERENCES categories(category_id)
-        );
-
-                        """)
-        
+                        """) 
 
         # Commit the changes and close the connection
         connectionToDb.commit()
@@ -129,11 +108,7 @@ class CategoryUploadHandler(UploadHandler):
         # we separate the ISSN and EISSN because the journals graph database sometimes does not have one of them.
         journals_df[['ISSN', 'EISSN']] = pd.DataFrame(df['identifiers'].tolist(), index=df.index)
 
-    
-
         ## ------------------------------------------- AREAS DATAFRAME ------------------------------------------- ##
-
-
         # Get the Series 'areas' from the dataframe
         areas_series = df["areas"]
         # Use explode to spread multiple values in the areas columns across different rows
@@ -151,39 +126,18 @@ class CategoryUploadHandler(UploadHandler):
         areas_journals_dataframe = areas_journals_dataframe.explode("areas")
         areas_journals_dataframe.rename(columns={"areas": "area_id"}, inplace=True)
 
-        ## ------------------------------------------- CATEGORIES_QUARTILES DATAFRAME ------------------------------------------- ##
-
-        # we create a table with ALL the DICTIONATIES of the CATEGORIES
-        dummy_dataframe = df[['categories']].explode("categories")
-        # we normalize the dataframe into a flat table
-        categories_quartiles_dataframe = pd.json_normalize(dummy_dataframe['categories'])
-        categories_quartiles_dataframe.rename(columns={"id": "category_id"}, inplace=True)
-
-        ## DROP DUPLICATES
-        categories_quartiles_dataframe = categories_quartiles_dataframe.drop_duplicates(subset=["category_id","quartile"])
-
         ## ------------------------------------------- CATEGORIES DATAFRAME ------------------------------------------- ##
 
-
-        ## DROP DUPLICATES
-        categories_dataframe = categories_quartiles_dataframe["category_id"].copy()
-        categories_dataframe = categories_dataframe.drop_duplicates()
-        categories_dataframe = pd.DataFrame(categories_dataframe, columns = ["category_id"])
-
-        # categories_dataframe = categories_dataframe.drop_duplicates(subset=["category_id"])
-
-
-        ## ------------------------------------------- JOURNALS_CATEGORIES DATAFRAME ------------------------------------------- ##
-
         # Take the unique identifiers from the journals dataframe
-        journals_categories_dataframe = pd.DataFrame(journals_df['journal_id'])
-        journals_categories_dataframe.insert(1, "categories", df['categories'].values)
-        journals_categories_dataframe = journals_categories_dataframe.explode("categories")
-        # Extract id and quartile from the categories dictionary
-        journals_categories_dataframe['category_id'] = journals_categories_dataframe['categories'].apply(lambda x: x['id'])
-        # Drop the original categories column
-        journals_categories_dataframe = journals_categories_dataframe.drop('categories', axis=1)
+        categories_dataframe = pd.DataFrame(journals_df['journal_id'])
+        categories_dataframe.insert(1, "categories", df['categories'].values)
 
+        categories_dataframe = categories_dataframe.explode("categories")
+        # Extract id and quartile from the categories dictionary
+        categories_dataframe['category_id'] = categories_dataframe['categories'].apply(lambda x: x['id'])
+        categories_dataframe['quartile'] = categories_dataframe['categories'].apply(lambda x: x.get('quartile'))
+        # Drop the original categories column
+        categories_dataframe = categories_dataframe.drop('categories', axis=1)
 
 
         ############## ----------------- INSERTING DATA INTO THE DATABASE ----------------- ##############
@@ -198,18 +152,6 @@ class CategoryUploadHandler(UploadHandler):
                                VALUES (?, ?, ?);
                                """, (row["journal_id"], row["ISSN"], row["EISSN"]))
             
-        for idx, row in categories_dataframe.iterrows():
-            cursorToDb.execute("""
-                               INSERT INTO categories (category_id) 
-                               VALUES (?);
-                               """, (row["category_id"],))
-            
-        for idx, row in categories_quartiles_dataframe.iterrows():
-            cursorToDb.execute("""
-                               INSERT INTO categories_quartiles (category_id, quartile) 
-                               VALUES (?, ?);
-                               """, (row["category_id"], row["quartile"]))
-            
         for idx, row in area_df.iterrows():
             cursorToDb.execute("""
                                INSERT INTO areas (area_id) 
@@ -222,11 +164,11 @@ class CategoryUploadHandler(UploadHandler):
                                VALUES (?, ?);
                                """, (row["journal_id"], row["area_id"]))
         
-        for idx, row in journals_categories_dataframe.iterrows():
+        for idx, row in categories_dataframe.iterrows():
             cursorToDb.execute("""
-                               INSERT INTO journals_categories (journal_id, category_id) 
-                               VALUES (?, ?);
-                               """, (row["journal_id"], row["category_id"]))
+                               INSERT INTO categories (journal_id, category_id, quartile)
+                               VALUES (?, ?, ?);
+                               """, (row["journal_id"], row["category_id"], row["quartile"]))
         
         # Commit the changes and close the connection
         connectionToDb.commit()
@@ -235,10 +177,23 @@ class CategoryUploadHandler(UploadHandler):
         return True
     
     def __str__(self):
+
+         # return all the categories in a database, with no repetitions.
+
+        conn = connect(self.dbPathOrUrl)
+        cursor = conn.cursor()
+        cursor.execute("SELECT category_id FROM categories;")
+        
+        categories = cursor.fetchall()
+        df = pd.DataFrame(categories, columns=["category_id"])
+
+        conn.close()
+    
+        return df
         res = ""
         conn = connect(self.dbPathOrUrl)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM areas_journals;")
+        cursor.execute("SELECT * FROM categories;")
         for row in cursor.fetchall():
             #res + str(row)
             print(row)
@@ -264,9 +219,11 @@ class CategoryQueryHandler(QueryHandler):
 
 if __name__ == "__main__":
 
+
     CategoryUploadHandler = CategoryUploadHandler("a.db")
 
     CategoryUploadHandler.pushDataToDb("./resources/scimago.json")
 
     print("Data pushed to database")
-    # print(CategoryUploadHandler)
+    print("CATEGORIES IN THE DATABASE")
+    print(CategoryUploadHandler.__str__())
