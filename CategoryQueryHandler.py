@@ -234,7 +234,7 @@ class CategoryQueryHandler(QueryHandler):
     
         
     
-def test():
+def testForCategoryQueryHandler():
 
     UploadHandler = CategoryUploadHandler("a.db")
     UploadHandler.pushDataToDb("./resources/scimago.json")
