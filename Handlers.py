@@ -97,7 +97,7 @@ class CategoryUploadHandler(UploadHandler):
 
         # We chose as the primary key the firs id (if its not None) or the second one (if the first is None)
         # This is to avoid creating duplicate primary keys in the database when we supplementing the database with an additional dataset
-        df["journal_id"] = ["Journal-"+ row[0][0] if row[0][0] != None else "Journal-"+ row[0][1] for idx, row in df.iterrows()]
+        df["journal_id"] = [row[0][0] if row[0][0] != None else row[0][1] for idx, row in df.iterrows()]
 
         ### WE DROP THE DUPLICATES
         df = df.drop_duplicates(subset=["journal_id"])
@@ -107,6 +107,7 @@ class CategoryUploadHandler(UploadHandler):
         journals_df = df[["journal_id"]]
         # we separate the ISSN and EISSN because the journals graph database sometimes does not have one of them.
         journals_df[['ISSN', 'EISSN']] = pd.DataFrame(df['identifiers'].tolist(), index=df.index)
+        print(journals_df[40:50])
 
         ## ------------------------------------------- AREAS DATAFRAME ------------------------------------------- ##
         # Get the Series 'areas' from the dataframe
@@ -226,4 +227,4 @@ if __name__ == "__main__":
 
     print("Data pushed to database")
     print("CATEGORIES IN THE DATABASE")
-    print(CategoryUploadHandler.__str__())
+    # print(CategoryUploadHandler.__str__())
