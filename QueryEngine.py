@@ -1,4 +1,6 @@
 from Entities import Journal, Category, Area
+from Handlers import *
+
 
 class BasicQueryEngine(object):
     def __init__(self, journalQuery=[], categoryQuery=[]):
@@ -105,22 +107,43 @@ class BasicQueryEngine(object):
     def getAllAreas(self):
         allAreas = []
         for a_queryHandler in self.categoryQuery:
-            areas_df = c_queryHandler.getAllCategories()
-            if not categories_df.empty:
-                for _, row in categories_df.iterrows():
-                    category = Category([row['journal_category_id'], row['category_id'], row['quartile']])
-                    allCategories.append(category)
-        return allCategories
+            areas_df = a_queryHandler.getAllAreas()
+            if not areas_df.empty:
+                for _, row in areas_df.iterrows():
+                    areas = Area([row['journal_id'], row['area_id']])
+                    allAreas.append(areas)
+        return allAreas
 
     def getCategoriesWithQuartile(self, quartiles):
-        pass
+        categoriesWithQuartile = []
+        for c_queryHandler in self.categoryQuery:
+            categories_df = c_queryHandler.getCategoriesWithQuartile(quartiles)
+            if not categories_df.empty:
+                for _, row in categories_df.iterrows():
+                    category = Category([row['journal_id'], row['category_id']], row['quartile'])
+                    categoriesWithQuartile.append(category)
+        return categoriesWithQuartile
 
     def getCategoriesAssignedToAreas(self, area_ids):
-        pass
+        categoriesAssignedToAreas = []
+        for c_queryHandler in self.categoryQuery:
+            categories_df = c_queryHandler.getCategoriesAssignedToAreas(area_ids)
+            if not categories_df.empty:
+                for _, row in categories_df.iterrows():
+                    category = Category([row['journal_id'], row['category_id']], row['quartile'])
+                    categoriesAssignedToAreas.append(category)
+        return categoriesAssignedToAreas
+    
 
     def getAreasAssignedToCategories(self, category_ids):
-        pass
-
+        areasAssignedToCategories = []
+        for c_queryHandler in self.categoryQuery:
+            areas_df = c_queryHandler.getAreasAssignedToCategories(category_ids)
+            if not areas_df.empty:
+                for _, row in areas_df.iterrows():
+                    area = Area([row['journal_id'], row['area_id']])
+                    areasAssignedToCategories.append(area)
+        return areasAssignedToCategories
 
 
 
@@ -146,3 +169,40 @@ class FullQueryEngine(BasicQueryEngine):
 
     def getDiamondJournalsInAreasAndCategoriesWithQuartile(self, areas_ids, category_ids, quartiles):
         pass
+
+
+
+
+def test():
+    return 0
+
+if __name__ == "__main__":
+    
+
+    # Test the BasicQueryEngine class
+    journalQuery = []  # Replace with actual query handlers
+    categoryQuery = []  # Replace with actual query handlers
+    query_engine = BasicQueryEngine(journalQuery, categoryQuery)
+
+    # WE CREATE THE QUERYHANDLER
+
+    # We need to create some mock handlers to test the methods
+    # lets create a CategoryUploadHandler
+    Cat_UploadHandlerd = CategoryUploadHandler("a.db")
+    Cat_UploadHandlerd.pushDataToDb("./resources/scimago.json")
+    Cat_QueryHandler = CategoryQueryHandler("a.db")
+
+    ## WE ADD THE HANDLER TO THE QUERY ENGINE
+    query_engine.addCategoryHandler(Cat_QueryHandler)
+
+
+    categories = query_engine.getAreasAssignedToCategories({"Artificial Intelligence"})
+    for category in categories:
+        print(category.getIds())
+
+    #areas = query_engine.getAllAreas()
+    #for area in areas:
+    #    print(area.getQuartile())
+    test()
+
+    

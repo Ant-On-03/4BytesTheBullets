@@ -110,7 +110,7 @@ class CategoryQueryHandler(QueryHandler):
 
 
         query =  f"""
-                    SELECT DISTINCT category_id 
+                    SELECT DISTINCT journal_id, category_id, quartile 
                     FROM categories
                     WHERE quartile IN ({
 
@@ -126,10 +126,8 @@ class CategoryQueryHandler(QueryHandler):
         
         # We turn it into a Dataframe
         categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["category_id"])
-
+        df = pd.DataFrame(categories, columns=["journal_id", "category_id", "quartile"])
         conn.close()
-
         return df
         # This is in case what we wanted was the INTERSECTIO instead of the UNION.
         query = """

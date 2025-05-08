@@ -521,7 +521,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
 
 
         query =  f"""
-                    SELECT DISTINCT category_id 
+                    SELECT DISTINCT journal_id, category_id, quartile
                     FROM categories
                     WHERE quartile IN ({
 
@@ -537,8 +537,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         
         # We turn it into a Dataframe
         categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["category_id"])
-
+        df = pd.DataFrame(categories, columns=["journal_id", "category_id", "quartile"])
         conn.close()
 
         return df
@@ -577,7 +576,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
 
         query =  f"""
 
-                    SELECT DISTINCT category_id
+                    SELECT DISTINCT jc.journal_id, jc.category_id, jc.quartile
 
                     FROM categories AS jc
                     JOIN journals AS j ON jc.journal_id = j.journal_id
@@ -596,7 +595,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         cursor.execute(query, tuple(area_ids))
         # We turn it into a Dataframe
         categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["category_id"])
+        df = pd.DataFrame(categories, columns=["journal_id", "category_id", "quartile"])
         conn.close()
         return df
 
@@ -609,7 +608,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         cursor = conn.cursor()
         query =  f"""
 
-                    SELECT DISTINCT area_id
+                    SELECT DISTINCT aj.journal_id, aj.area_id
 
                     FROM categories AS c
                     JOIN journals AS j ON c.journal_id = j.journal_id
@@ -626,7 +625,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         cursor.execute(query, tuple(categories))
         # We turn it into a Dataframe
         areas = cursor.fetchall()
-        df = pd.DataFrame(areas, columns=["area_id"])
+        df = pd.DataFrame(areas, columns=["journal_id", "area_id"])
         conn.close()
         return df
     
