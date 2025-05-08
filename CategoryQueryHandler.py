@@ -66,10 +66,10 @@ class CategoryQueryHandler(QueryHandler):
 
         conn = connect(self.dbPathOrUrl)
         cursor = conn.cursor()
-        cursor.execute("SELECT category_id FROM categories;")
+        cursor.execute("SELECT journal_id, category_id, quartile FROM categories;")
         
         categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["category_id"])
+        df = pd.DataFrame(categories, columns=["journal_id", "category_id", "quartile"])
 
         conn.close()
     
@@ -82,10 +82,10 @@ class CategoryQueryHandler(QueryHandler):
         # return all the areas in a database, with no repetitions.
         conn = connect(self.dbPathOrUrl)
         cursor = conn.cursor()
-        cursor.execute("SELECT area_id FROM areas;")
+        cursor.execute("SELECT journal_id, area_id FROM areas_journals;")
         
         categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["area_id"])
+        df = pd.DataFrame(categories, columns=["journal_id", "area_id"])
 
         conn.close()
         
