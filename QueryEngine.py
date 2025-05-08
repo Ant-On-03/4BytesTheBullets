@@ -204,5 +204,3 @@ if __name__ == "__main__":
     #for area in areas:
     #    print(area.getQuartile())
     test()
-
-    
