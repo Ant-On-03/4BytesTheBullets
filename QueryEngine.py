@@ -1,5 +1,5 @@
 from Entities import Journal, Category, Area
-from Handlers import *
+from Handlers import JournalQueryHandler, CategoryQueryHandler
 
 
 class BasicQueryEngine(object):
@@ -31,9 +31,29 @@ class BasicQueryEngine(object):
                     journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
             else:
                 journal = None
-        return journal
 
-    def getAllJournals(self):
+        for c_queryHandler in self.categoryQuery:
+            #check what sort of id it is
+            #if journal id
+            #if cat id
+            #if area id
+            catWithId_df = c_queryHandler.getById(id)
+            if not catWithId_df.empty:
+                cat = Category('x')
+            else:
+                cat = None
+
+        if journal != None and cat != None:
+            journal.setCategories(cat)
+            return journal
+
+        elif journal != None and cat == None:
+            return journal
+        
+        else:
+            return cat
+
+    def getAllJournals(self) -> list[Journal]:
         alljournals = []
         for j_queryHandler in self.journalQuery:
             journals_df = j_queryHandler.getAllJournals()
@@ -43,7 +63,7 @@ class BasicQueryEngine(object):
                     alljournals.append(journal)
         return alljournals
 
-    def getJournalsWithTitle(self, partialTitle):
+    def getJournalsWithTitle(self, partialTitle) -> list[Journal]:
         journalsWithTitle = []
         for j_queryHandler in self.journalQuery:
             journals_df = j_queryHandler.getJournalsWithTitle(partialTitle)
@@ -54,7 +74,7 @@ class BasicQueryEngine(object):
 
         return journalsWithTitle
 
-    def getJournalsPublishedBy(self, partialName):
+    def getJournalsPublishedBy(self, partialName) -> list[Journal]:
         journalsPublishedBy = []
         for j_queryHandler in self.journalQuery:
             journals_df = j_queryHandler.getJournalsPublishedBy(partialName)
@@ -64,7 +84,7 @@ class BasicQueryEngine(object):
                     journalsPublishedBy.append(journal)
         return journalsPublishedBy
 
-    def getJournalsWithLicense(self, licenses):
+    def getJournalsWithLicense(self, licenses) -> list[Journal]:
         journalsWithLicense = []
         for j_queryHandler in self.journalQuery:
             journals_df = j_queryHandler.getJournalsPublishedBy(licenses)
@@ -74,7 +94,7 @@ class BasicQueryEngine(object):
                     journalsWithLicense.append(journal)
         return journalsWithLicense
 
-    def getJournalsWithAPC(self):
+    def getJournalsWithAPC(self) -> list[Journal]:
         journalsWithAPC = []
         for j_queryHandler in self.journalQuery:
             journals_df = j_queryHandler.getJournalsWithAPC()
@@ -84,7 +104,7 @@ class BasicQueryEngine(object):
                     journalsWithAPC.append(journal)
         return journalsWithAPC
 
-    def getJournalsWithDOAJSeal(self):
+    def getJournalsWithDOAJSeal(self) -> list[Journal]:
         journalsWithDOAJSeal = []
         for j_queryHandler in self.journalQuery:
             journals_df = j_queryHandler.getJournalsWithDOAJSeal()
@@ -94,7 +114,7 @@ class BasicQueryEngine(object):
                     journalsWithDOAJSeal.append(journal)
         return journalsWithDOAJSeal
 
-    def getAllCategories(self):
+    def getAllCategories(self) -> list[Journal]:
         allCategories = []
         for c_queryHandler in self.categoryQuery:
             categories_df = c_queryHandler.getAllCategories()
@@ -104,7 +124,7 @@ class BasicQueryEngine(object):
                     allCategories.append(category)
         return allCategories
 
-    def getAllAreas(self):
+    def getAllAreas(self) -> list[Journal]:
         allAreas = []
         for a_queryHandler in self.categoryQuery:
             areas_df = a_queryHandler.getAllAreas()
@@ -146,61 +166,96 @@ class BasicQueryEngine(object):
         return areasAssignedToCategories
 
 
-
-
-
-
-
-
-
-
-
-
-
 class FullQueryEngine(BasicQueryEngine):
     def __init__(self, journalQuery, categoryQuery):
         super().__init__(journalQuery, categoryQuery)
 
     def getJournalsInCategoriesWithQuartile(self, category_ids, quartiles):
-        pass
+        journals = []
+        if len(category_ids) == 0 and len(quartiles) == 0:
+            return self.getAllJournals()
+
+        elif len(category_ids) == 0:
+            catWithQ = self.getCategoriesWithQuartile(quartiles)
+            for cat in catWithQ:
+                j = self.getEntityById(cat.getIds[0])
+                journals.append(j)
+
+        elif len(quartiles) == 0:
+            categories = self.getAllCategories()
+            for cat in categories:
+                j = self.getEntityById(cat.getIds[0])
+                journals.append(j)
+
+        else:
+            catWithQ = self.getCategoriesWithQuartile(quartiles)
+            for cat in catWithQ:
+                if cat.getIds()[1] in category_ids:
+                    j = self.getEntityById(cat.getIds[0])
+                    journals.append(j)
+
+        return journals
+
 
     def getJournalsInAreasWithLicense(self, areas_ids, licenses):
-        pass
+        journals = []
+        if len(areas_ids) == 0 and len(licenses) == 0:
+            return self.getAllJournals()
+        
+        elif len(areas_ids) == 0:
+            return self.getJournalsWithLicense(licenses)
+        
+        elif len(licenses) == 0:
+            for j in self.getAllJournals():
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas(list(a))
+                        journals.append(j)
+        else:
+            jWithLicenses = self.getJournalsWithLicense(licenses)
+            areas = []
+            for area in self.getAllAreas:
+                if area.getIds()[1] in areas_ids:
+                    areas.append(area)
+            
+            for j in jWithLicenses:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas(list(a))
+                        journals.append(j)
+            
+            return journals
 
     def getDiamondJournalsInAreasAndCategoriesWithQuartile(self, areas_ids, category_ids, quartiles):
-        pass
+        journals = []
+        journalsWithAPC_l = self.getJournalsWithAPC()
+        
+        if len(areas_ids) == 0 and len(category_ids) == 0 and len(quartiles) == 0:
+            return journalsWithAPC_l
+        
+        else:
+            jInCatWithQ_l = self.getJournalsInCategoriesWithQuartile(category_ids, quartiles)
 
+            #find all specified areas
+            areas = []
+            for area in self.getAllAreas:
+                if area.getIds()[1] in areas_ids:
+                    areas.append(area)
 
+            #find all journals with APC in specified areas
+            jInAreas_l = []
+            for j in journalsWithAPC_l:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas(list(a))
+                        jInAreas_l.append(j)
 
+            #find all journals with APC in specified areas in category with quartile
+            for j in jInAreas_l:
+                for jCat in jInCatWithQ_l:
+                    if j.getIds() == jCat.getIds():
+                        journals.append(j)
 
-def test():
-    return 0
-
-if __name__ == "__main__":
-    
-
-    # Test the BasicQueryEngine class
-    journalQuery = []  # Replace with actual query handlers
-    categoryQuery = []  # Replace with actual query handlers
-    query_engine = BasicQueryEngine(journalQuery, categoryQuery)
-
-    # WE CREATE THE QUERYHANDLER
-
-    # We need to create some mock handlers to test the methods
-    # lets create a CategoryUploadHandler
-    Cat_UploadHandlerd = CategoryUploadHandler("a.db")
-    Cat_UploadHandlerd.pushDataToDb("./resources/scimago.json")
-    Cat_QueryHandler = CategoryQueryHandler("a.db")
-
-    ## WE ADD THE HANDLER TO THE QUERY ENGINE
-    query_engine.addCategoryHandler(Cat_QueryHandler)
-
-
-    categories = query_engine.getAreasAssignedToCategories({"Artificial Intelligence"})
-    for category in categories:
-        print(category.getIds())
-
-    #areas = query_engine.getAllAreas()
-    #for area in areas:
-    #    print(area.getQuartile())
-    test()
+            return journals
+            
+            

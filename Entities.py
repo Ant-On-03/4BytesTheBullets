@@ -21,7 +21,11 @@ class Journal(IdentifiableEntity):
         return self.title
 
     def getLanguages(self):
-        return self.languages
+        lan = []
+        for l in self.languages.split(', '):
+            lan.append(l)
+        
+        return lan
     
     def getPublisher(self):
         return self.publisher
