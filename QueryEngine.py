@@ -98,7 +98,7 @@ class BasicQueryEngine(object):
             categories_df = c_queryHandler.getAllCategories()
             if not categories_df.empty:
                 for _, row in categories_df.iterrows():
-                    category = Category([row['journal_category_id'], row['category_id'], row['quartile']])
+                    category = Category([row['journal_id'], row['category_id']], row['quartile'])
                     allCategories.append(category)
         return allCategories
 
@@ -120,6 +120,19 @@ class BasicQueryEngine(object):
 
     def getAreasAssignedToCategories(self, category_ids):
         pass
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class FullQueryEngine(BasicQueryEngine):
     def __init__(self, journalQuery, categoryQuery):
