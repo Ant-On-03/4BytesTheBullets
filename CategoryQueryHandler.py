@@ -20,6 +20,8 @@ class QueryHandler(Handler):
 
 
 
+
+
 class CategoryQueryHandler(QueryHandler):
 
     def __init__(self, dbPathOrUrl):
@@ -36,10 +38,9 @@ class CategoryQueryHandler(QueryHandler):
         query = """
         
         
-        SELECT DISTINCT j.issn, j.eissn, jc.category_id, cq.quartile, aj.area_id 
+        SELECT DISTINCT j.issn, j.eissn, c.category_id, c.quartile, aj.area_id 
         FROM journals AS j
-        JOIN journals_categories AS jc ON j.journal_id = jc.journal_id
-        JOIN categories_quartiles AS cq ON jc.category_id = cq.category_id
+        JOIN categories AS c ON j.journal_id = c.journal_id
         JOIN areas_journals AS aj ON j.journal_id = aj.journal_id
         WHERE (j.issn = ? OR j.eissn = ?);
     
@@ -67,10 +68,10 @@ class CategoryQueryHandler(QueryHandler):
 
         conn = connect(self.dbPathOrUrl)
         cursor = conn.cursor()
-        cursor.execute("SELECT category_id FROM categories;")
+        cursor.execute("SELECT journal_id, category_id, quartile FROM categories;")
         
         categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["category_id"])
+        df = pd.DataFrame(categories, columns=["journal_id", "category_id", "quartile"])
 
         conn.close()
     
@@ -83,10 +84,10 @@ class CategoryQueryHandler(QueryHandler):
         # return all the areas in a database, with no repetitions.
         conn = connect(self.dbPathOrUrl)
         cursor = conn.cursor()
-        cursor.execute("SELECT area_id FROM areas;")
+        cursor.execute("SELECT journal_id, area_id FROM areas_journals;")
         
         categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["area_id"])
+        df = pd.DataFrame(categories, columns=["journal_id", "area_id"])
 
         conn.close()
         
@@ -110,7 +111,7 @@ class CategoryQueryHandler(QueryHandler):
 
         query =  f"""
                     SELECT DISTINCT category_id 
-                    FROM categories_quartiles 
+                    FROM categories
                     WHERE quartile IN ({
 
                         ', '.join(['?'] * len(quartiles)) 
@@ -167,7 +168,7 @@ class CategoryQueryHandler(QueryHandler):
 
                     SELECT DISTINCT category_id
 
-                    FROM journals_categories AS jc
+                    FROM categories AS jc
                     JOIN journals AS j ON jc.journal_id = j.journal_id
                     JOIN areas_journals AS aj ON j.journal_id = aj.journal_id
 
@@ -183,7 +184,6 @@ class CategoryQueryHandler(QueryHandler):
         # We use said query on the database.
         cursor.execute(query, tuple(area_ids))
 
-        print("cursor.fetchall():", cursor.fetchall())
         
         # We turn it into a Dataframe
         categories = cursor.fetchall()
@@ -209,11 +209,11 @@ class CategoryQueryHandler(QueryHandler):
 
                     SELECT DISTINCT area_id
 
-                    FROM journals_categories AS jc
-                    JOIN journals AS j ON jc.journal_id = j.journal_id
+                    FROM categories AS c
+                    JOIN journals AS j ON c.journal_id = j.journal_id
                     JOIN areas_journals AS aj ON j.journal_id = aj.journal_id
 
-                    WHERE jc.category_id IN ({
+                    WHERE c.category_id IN ({
 
                         ', '.join(['?'] * len(categories)) 
 
@@ -234,51 +234,31 @@ class CategoryQueryHandler(QueryHandler):
     
         
     
+def test():
+
+    UploadHandler = CategoryUploadHandler("a.db")
+    UploadHandler.pushDataToDb("./resources/scimago.json")
+    QueryHandler = CategoryQueryHandler("a.db")
+
+    areas = QueryHandler.getAllAreas()
+    print("All areas:", areas)
+
+    categories=QueryHandler.getAllCategories()
+    print("All categories:", categories)
+
+    categories = QueryHandler.getCategoriesWithQuartile({"Q1"})
+    print("Categories with quartile Q1 and Q2:", categories)
+
+    categories = QueryHandler.getAreasAssignedToCategories({"Drug Discovery"})
+    print("Areas assigned to categorie", categories)
+
+    areas = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
+    print("Categories assigned to area", areas)
+
+    IDs = QueryHandler.getById("2058-7546")
+    print("IDs:", IDs)
 
 
 if __name__ == "__main__":
     
-    CategoryUploadHandler = CategoryUploadHandler("a.db")
-    CategoryUploadHandler.pushDataToDb("./resources/scimago.json")
-    CategoryQueryHandler = CategoryQueryHandler("a.db")
-
-
-    areas = {}
-    categories = CategoryQueryHandler.getCategoriesAssignedToAreas(areas)
-    print("CATEGORIES ASSIGNED TO AREAS")
-    print("length OF THEM:", len(categories))
-    print(categories)
-
-    categories = {"Catalysis","Philosophy"}
-    areas = CategoryQueryHandler.getAreasAssignedToCategories(categories)
-    print("AREAS ASSIGNED TO CATEGORIES")
-    print("length OF THEM:", len(areas))
-    print(areas)
-
-
-
-
-    getById = CategoryQueryHandler.getById("19")
-    print("GET BY ID")
-    print("length OF THEM:", len(getById))
-    # LETS PRINT ALL ROWS IN THE DATAFRAME.
-    pd.set_option('display.max_rows', None)
-    print(getById)
-
-
-from Entities import Journal, Category, Area
-
-class BasicQueryEngine(object):
-    def __init__(self, journalQuery=[], categoryQuery=[]):
-        self.journalQuery = journalQuery
-        self.categoryQuery = categoryQuery
-        
-    def getAllCategories(self):
-            allCategories = []
-            for c_queryHandler in self.categoryQuery:
-                categories_df = c_queryHandler.getAllCategories()
-                if not categories_df.empty:
-                    for _, row in categories_df.iterrows():
-                        category = Category([row['journal_category_id'], row['category_id'], row['quartile']])
-                        allCategories.append(category)
-            return allCategories
+    test()
