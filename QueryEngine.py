@@ -93,10 +93,24 @@ class BasicQueryEngine(object):
         return journalsWithDOAJSeal
 
     def getAllCategories(self):
-        pass
+        allCategories = []
+        for c_queryHandler in self.categoryQuery:
+            categories_df = c_queryHandler.getAllCategories()
+            if not categories_df.empty:
+                for _, row in categories_df.iterrows():
+                    category = Category([row['journal_category_id'], row['category_id'], row['quartile']])
+                    allCategories.append(category)
+        return allCategories
 
     def getAllAreas(self):
-        pass
+        allAreas = []
+        for a_queryHandler in self.categoryQuery:
+            areas_df = c_queryHandler.getAllCategories()
+            if not categories_df.empty:
+                for _, row in categories_df.iterrows():
+                    category = Category([row['journal_category_id'], row['category_id'], row['quartile']])
+                    allCategories.append(category)
+        return allCategories
 
     def getCategoriesWithQuartile(self, quartiles):
         pass
