@@ -139,7 +139,7 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
         return True
 
     
-class CategoryUploadHandler(UploadHandler): #Anton and Anouk
+class CategoryUploadHandler(UploadHandler):
 
     def __init__(self, dbPathOrUrl):
         super().__init__(dbPathOrUrl)
@@ -211,7 +211,7 @@ class CategoryUploadHandler(UploadHandler): #Anton and Anouk
 
         # We chose as the primary key the firs id (if its not None) or the second one (if the first is None)
         # This is to avoid creating duplicate primary keys in the database when we supplementing the database with an additional dataset
-        df["journal_id"] = ["Journal-"+ row[0][0] if row[0][0] != None else "Journal-"+ row[0][1] for idx, row in df.iterrows()]
+        df["journal_id"] = [row[0][0] if row[0][0] != None else row[0][1] for idx, row in df.iterrows()]
 
         ### WE DROP THE DUPLICATES
         df = df.drop_duplicates(subset=["journal_id"])
@@ -441,12 +441,8 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         journals_withSeal_df = get(self.dbPathOrUrl, query, True)
         return journals_withSeal_df
 
+
 class CategoryQueryHandler(QueryHandler): #Anton and Anouk
-   
-        
-
-
-class CategoryQueryHandler(QueryHandler):
 
     def __init__(self, dbPathOrUrl):
         super().__init__(dbPathOrUrl)
