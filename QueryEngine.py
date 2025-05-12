@@ -5,9 +5,9 @@ import re
 
 
 class BasicQueryEngine(object):
-    def __init__(self, journalQuery=[], categoryQuery=[]):
-        self.journalQuery = journalQuery
-        self.categoryQuery = categoryQuery
+    def __init__(self, journalQuery=None, categoryQuery=None):
+        self.journalQuery = journalQuery if journalQuery is not None else []
+        self.categoryQuery = categoryQuery if categoryQuery is not None else []
 
     def cleanJournalHandlers(self):
         self.journalQuery = []
@@ -42,7 +42,7 @@ class BasicQueryEngine(object):
                         cat_l = []
                         area_l = []
                         for _, row in categoryWithId_df.iterrows():
-                            category = Category([row['journal_id'], row['category_id']], row['quartile'])
+                            category = Category([row['issn'], row['eissn'], row['category_id']], row['quartile'])
                             area = Area(row['area_id'])
                             cat_l.append(category)
                             area_l.append(area)
@@ -56,17 +56,19 @@ class BasicQueryEngine(object):
             return journal
             
         else:
+            category = None
+            area = None
             for c_queryHandler in self.categoryQuery:
                 categoryWithId_df = c_queryHandler.getById(id)
                 if not categoryWithId_df.empty:
-                    if id in 'category_id':
+                    if id in categoryWithId_df['category_id'].values:
                         category = Category([id])
-                    elif id in 'area_id':
+                    elif id in categoryWithId_df['area_id'].values:
                         area = Area([id])
 
-                else:
-                    category = None
-                    area = None
+                # else:
+                #     category = None
+                #     area = None
 
             if category == None and area == None:
                 return None
@@ -111,7 +113,7 @@ class BasicQueryEngine(object):
     def getJournalsWithLicense(self, licenses) -> list[Journal]:
         journalsWithLicense = []
         for j_queryHandler in self.journalQuery:
-            journals_df = j_queryHandler.getJournalsPublishedBy(licenses)
+            journals_df = j_queryHandler.getJournalsWithLicense(licenses)
             if not journals_df.empty:
                 for _, row in journals_df.iterrows():
                     journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
@@ -138,7 +140,7 @@ class BasicQueryEngine(object):
                     journalsWithDOAJSeal.append(journal)
         return journalsWithDOAJSeal
 
-    def getAllCategories(self) -> list[Journal]:
+    def getAllCategories(self) -> list[Category]:
         allCategories = []
         for c_queryHandler in self.categoryQuery:
             categories_df = c_queryHandler.getAllCategories()
@@ -148,7 +150,7 @@ class BasicQueryEngine(object):
                     allCategories.append(category)
         return allCategories
 
-    def getAllAreas(self) -> list[Journal]:
+    def getAllAreas(self) -> list[Area]:
         allAreas = []
         for a_queryHandler in self.categoryQuery:
             areas_df = a_queryHandler.getAllAreas()
@@ -158,7 +160,7 @@ class BasicQueryEngine(object):
                     allAreas.append(areas)
         return allAreas
 
-    def getCategoriesWithQuartile(self, quartiles):
+    def getCategoriesWithQuartile(self, quartiles) -> list[Category]:
         categoriesWithQuartile = []
         for c_queryHandler in self.categoryQuery:
             categories_df = c_queryHandler.getCategoriesWithQuartile(quartiles)
@@ -168,7 +170,7 @@ class BasicQueryEngine(object):
                     categoriesWithQuartile.append(category)
         return categoriesWithQuartile
 
-    def getCategoriesAssignedToAreas(self, area_ids):
+    def getCategoriesAssignedToAreas(self, area_ids) -> list[Category]:
         categoriesAssignedToAreas = []
         for c_queryHandler in self.categoryQuery:
             categories_df = c_queryHandler.getCategoriesAssignedToAreas(area_ids)
@@ -179,7 +181,7 @@ class BasicQueryEngine(object):
         return categoriesAssignedToAreas
     
 
-    def getAreasAssignedToCategories(self, category_ids):
+    def getAreasAssignedToCategories(self, category_ids) -> list[Area]:
         areasAssignedToCategories = []
         for c_queryHandler in self.categoryQuery:
             areas_df = c_queryHandler.getAreasAssignedToCategories(category_ids)
@@ -191,7 +193,7 @@ class BasicQueryEngine(object):
 
 
 class FullQueryEngine(BasicQueryEngine):
-    def __init__(self, journalQuery, categoryQuery):
+    def __init__(self, journalQuery=None, categoryQuery=None):
         super().__init__(journalQuery, categoryQuery)
 
     def getJournalsInCategoriesWithQuartile(self, category_ids, quartiles):
@@ -202,20 +204,20 @@ class FullQueryEngine(BasicQueryEngine):
         elif len(category_ids) == 0:
             catWithQ = self.getCategoriesWithQuartile(quartiles)
             for cat in catWithQ:
-                j = self.getEntityById(cat.getIds[0])
+                j = self.getEntityById(cat.getIds()[0])
                 journals.append(j)
 
         elif len(quartiles) == 0:
             categories = self.getAllCategories()
             for cat in categories:
-                j = self.getEntityById(cat.getIds[0])
+                j = self.getEntityById(cat.getIds()[0])
                 journals.append(j)
 
         else:
             catWithQ = self.getCategoriesWithQuartile(quartiles)
             for cat in catWithQ:
                 if cat.getIds()[1] in category_ids:
-                    j = self.getEntityById(cat.getIds[0])
+                    j = self.getEntityById(cat.getIds()[0])
                     journals.append(j)
 
         return journals
@@ -238,14 +240,14 @@ class FullQueryEngine(BasicQueryEngine):
         else:
             jWithLicenses = self.getJournalsWithLicense(licenses)
             areas = []
-            for area in self.getAllAreas:
+            for area in self.getAllAreas():
                 if area.getIds()[1] in areas_ids:
                     areas.append(area)
             
             for j in jWithLicenses:
                 for a in areas:
                     if a.getIds()[0] in j.getIds():
-                        j.setAreas(list(a))
+                        j.setAreas([a])
                         journals.append(j)
             
             return journals
@@ -262,7 +264,7 @@ class FullQueryEngine(BasicQueryEngine):
 
             #find all specified areas
             areas = []
-            for area in self.getAllAreas:
+            for area in self.getAllAreas():
                 if area.getIds()[1] in areas_ids:
                     areas.append(area)
 
@@ -271,7 +273,7 @@ class FullQueryEngine(BasicQueryEngine):
             for j in journalsWithAPC_l:
                 for a in areas:
                     if a.getIds()[0] in j.getIds():
-                        j.setAreas(list(a))
+                        j.setAreas([a])
                         jInAreas_l.append(j)
 
             #find all journals with APC in specified areas in category with quartile

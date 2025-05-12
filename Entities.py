@@ -2,7 +2,7 @@ class IdentifiableEntity(object):
     def __init__(self, id):
         self.id = id
 
-    def getIds(self):
+    def getIds(self) -> list:
         return self.id
 
 class Journal(IdentifiableEntity):

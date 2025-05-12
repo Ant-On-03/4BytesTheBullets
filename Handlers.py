@@ -97,7 +97,7 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
         return new_data_df      
    
     def pushDataToDb(self, new_data_path, master_csv_path):
-        new_data_df = pd.read_csv(new_data_path)
+        new_data_df = pd.read_csv(new_data_path, delimiter= ";" )
         store = SPARQLUpdateStore()
         #Open in terminal: java -server -Xmx1g -jar blazegraph.jar
 
@@ -515,7 +515,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
             cursor.execute(query, (id, id))
             # print("query:", query)
             journals = cursor.fetchall()
-            df = pd.DataFrame(journals)
+            df = pd.DataFrame(journals, columns=["issn", "eissn", "category_id", "quartile", "area_id"])
             conn.close()
         else:
             
@@ -534,7 +534,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
             cursor.execute(query, (id, id))
             
             cat_area = cursor.fetchall()
-            df = pd.DataFrame(cat_area)
+            df = pd.DataFrame(cat_area, columns=["category_id", "area_id"])
 
             conn.close()       
         return df
@@ -695,31 +695,3 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         conn.close()
         return df
     
-
-def testForCategoryQueryHandler():
-
-    UploadHandler = CategoryUploadHandler("a.db")
-    UploadHandler.pushDataToDb("./resources/scimago.json")
-    QueryHandler = CategoryQueryHandler("a.db")
-
-    # areas = QueryHandler.getAllAreas()
-    # print("All areas:", areas)
-
-    # categories=QueryHandler.getAllCategories()
-    # print("All categories:", categories)
-
-    # categories = QueryHandler.getCategoriesWithQuartile({"Q1"})
-    # print("Categories with quartile Q1 and Q2:", categories)
-
-    # categories = QueryHandler.getAreasAssignedToCategories({"Drug Discovery"})
-    # print("Areas assigned to categorie", categories)
-
-    # areas = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
-    # print("Categories assigned to area", areas)
-
-    IDs = QueryHandler.getById("hello")
-    print("IDs:", IDs)
-
-if __name__ == "__main__":
-    
-    testForCategoryQueryHandler()
