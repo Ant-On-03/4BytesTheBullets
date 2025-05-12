@@ -10,6 +10,7 @@ import pandas as pd
 from sqlite3 import connect
 import os
 from pandas import DataFrame
+import re
 
 class Handler(object):
     def __init__(self, dbPathOrUrl):
@@ -449,28 +450,49 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
 
     def getById(self, id:str) -> DataFrame:
         
-        # RETURN A JOIN OF ALL THE TABLES THAT HAVE THE ID OF THE JOURNAL.
-        # This is the query that will be used to get the journal with the id given.
-        conn = connect(self.dbPathOrUrl)
-        cursor = conn.cursor()
+        if re.fullmatch(r"(?=.*\d)[\dX]{4}-[\dX]{4}", id):
+            # RETURN A JOIN OF ALL THE TABLES THAT HAVE THE ID OF THE JOURNAL.
+            # This is the query that will be used to get the journal with the id given.
+            conn = connect(self.dbPathOrUrl)
+            cursor = conn.cursor()
 
-        query = """
+            query = """
+            
+            
+            SELECT DISTINCT j.issn, j.eissn, c.category_id, c.quartile, aj.area_id 
+            FROM journals AS j
+            JOIN categories AS c ON j.journal_id = c.journal_id
+            JOIN areas_journals AS aj ON j.journal_id = aj.journal_id
+            WHERE (j.issn = ? OR j.eissn = ?);
         
-        
-        SELECT DISTINCT j.issn, j.eissn, c.category_id, c.quartile, aj.area_id 
-        FROM journals AS j
-        JOIN categories AS c ON j.journal_id = c.journal_id
-        JOIN areas_journals AS aj ON j.journal_id = aj.journal_id
-        WHERE (j.issn = ? OR j.eissn = ?);
-    
-        
-        """
+            
+            """
 
-        cursor.execute(query, (id, id))
-        # print("query:", query)
-        journals = cursor.fetchall()
-        df = pd.DataFrame(journals)
-        conn.close()        
+            cursor.execute(query, (id, id))
+            # print("query:", query)
+            journals = cursor.fetchall()
+            df = pd.DataFrame(journals)
+            conn.close()
+        else:
+            
+            conn = connect(self.dbPathOrUrl)
+            cursor = conn.cursor()
+            query = """
+            
+            
+            SELECT DISTINCT category_id, aj.area_id 
+            FROM categories AS c
+            JOIN areas_journals AS aj ON c.journal_id = aj.journal_id
+            WHERE (category_id = ? OR aj.area_id = ?);
+        
+            
+            """
+            cursor.execute(query, (id, id))
+            
+            cat_area = cursor.fetchall()
+            df = pd.DataFrame(cat_area)
+
+            conn.close()       
         return df
 
     def getAllCategories(self) -> DataFrame:
@@ -636,20 +658,24 @@ def testForCategoryQueryHandler():
     UploadHandler.pushDataToDb("./resources/scimago.json")
     QueryHandler = CategoryQueryHandler("a.db")
 
-    areas = QueryHandler.getAllAreas()
-    print("All areas:", areas)
+    # areas = QueryHandler.getAllAreas()
+    # print("All areas:", areas)
 
-    categories=QueryHandler.getAllCategories()
-    print("All categories:", categories)
+    # categories=QueryHandler.getAllCategories()
+    # print("All categories:", categories)
 
-    categories = QueryHandler.getCategoriesWithQuartile({"Q1"})
-    print("Categories with quartile Q1 and Q2:", categories)
+    # categories = QueryHandler.getCategoriesWithQuartile({"Q1"})
+    # print("Categories with quartile Q1 and Q2:", categories)
 
-    categories = QueryHandler.getAreasAssignedToCategories({"Drug Discovery"})
-    print("Areas assigned to categorie", categories)
+    # categories = QueryHandler.getAreasAssignedToCategories({"Drug Discovery"})
+    # print("Areas assigned to categorie", categories)
 
-    areas = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
-    print("Categories assigned to area", areas)
+    # areas = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
+    # print("Categories assigned to area", areas)
 
-    IDs = QueryHandler.getById("2058-7546")
+    IDs = QueryHandler.getById("hello")
     print("IDs:", IDs)
+
+if __name__ == "__main__":
+    
+    testForCategoryQueryHandler()

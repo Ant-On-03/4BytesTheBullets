@@ -29,7 +29,7 @@ class CategoryQueryHandler(QueryHandler):
 
     def getById(self, id:str) -> DataFrame:
 
-        
+        if regex:
         # RETURN A JOIN OF ALL THE TABLES THAT HAVE THE ID OF THE JOURNAL.
         # This is the query that will be used to get the journal with the id given.
         conn = connect(self.dbPathOrUrl)
@@ -56,6 +56,9 @@ class CategoryQueryHandler(QueryHandler):
         df = pd.DataFrame(journals)
 
         conn.close()
+
+        else:
+            run the allcateogry
         
         return df
 
@@ -253,10 +256,10 @@ def testForCategoryQueryHandler():
     areas = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
     print("Categories assigned to area", areas)
 
-    IDs = QueryHandler.getById("2058-7546")
+    IDs = QueryHandler.getById("Electronic, Optical and Magnetic Materials")
     print("IDs:", IDs)
 
 
 if __name__ == "__main__":
     
-    test()
+    testForCategoryQueryHandler()

@@ -1,5 +1,7 @@
 from Entities import Journal, Category, Area
 from Handlers import JournalQueryHandler, CategoryQueryHandler
+import re
+
 
 
 class BasicQueryEngine(object):
@@ -24,34 +26,56 @@ class BasicQueryEngine(object):
         return True
 
     def getEntityById(self, id):
-        for j_queryHandler in self.journalQuery:
-            journalWithId_df = j_queryHandler.getById(id)
-            if not journalWithId_df.empty:
-                for _, row in journalWithId_df.iterrows():
-                    journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
-            else:
-                journal = None
+        if re.fullmatch(r"(?=.*\d)[\dX]{4}-[\dX]{4}", id):
+            for j_queryHandler in self.journalQuery:
+                journalWithId_df = j_queryHandler.getById(id)
+                if not journalWithId_df.empty:
+                    for _, row in journalWithId_df.iterrows():
+                        journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                else:
+                    journal = None
 
-        for c_queryHandler in self.categoryQuery:
-            #check what sort of id it is
-            #if journal id
-            #if cat id
-            #if area id
-            catWithId_df = c_queryHandler.getById(id)
-            if not catWithId_df.empty:
-                cat = Category('x')
-            else:
-                cat = None
-
-        if journal != None and cat != None:
-            journal.setCategories(cat)
+            if journal != None:
+                for c_queryHandler in self.categoryQuery:
+                    categoryWithId_df = c_queryHandler.getById(id)
+                    if not categoryWithId_df.empty:
+                        cat_l = []
+                        area_l = []
+                        for _, row in categoryWithId_df.iterrows():
+                            category = Category([row['journal_id'], row['category_id']], row['quartile'])
+                            area = Area(row['area_id'])
+                            cat_l.append(category)
+                            area_l.append(area)
+                        journal.setCategories(cat_l)
+                        journal.setAreas(area_l)
+                            
+                    else:
+                        category = None
+                        area = None
+            
             return journal
-
-        elif journal != None and cat == None:
-            return journal
-        
+            
         else:
-            return cat
+            for c_queryHandler in self.categoryQuery:
+                categoryWithId_df = c_queryHandler.getById(id)
+                if not categoryWithId_df.empty:
+                    if id in 'category_id':
+                        category = Category([id])
+                    elif id in 'area_id':
+                        area = Area([id])
+
+                else:
+                    category = None
+                    area = None
+
+            if category == None and area == None:
+                return None
+            
+            elif category != None:
+                return category
+            
+            else:
+                return area
 
     def getAllJournals(self) -> list[Journal]:
         alljournals = []
