@@ -17,6 +17,12 @@ class Journal(IdentifiableEntity):
         self.area = None
         super().__init__(id)
 
+    def __repr__(self):
+        return f"Journal(id:{self.id}, title:{self.title}, languages:{self.languages}, apc:{self.apc}, publisher:{self.publisher}, category:{self.category}, area:{self.area})"
+    
+    def __str__(self):
+        return f"Journal(id:{self.id}, title:{self.title})"
+
     def getTitle(self):
         return self.title
 
@@ -58,9 +64,21 @@ class Category(IdentifiableEntity):
         self.quartile = quartile
         super().__init__(id)
 
+    def __repr__(self):
+        return f"Category(id:{self.id}, quartile:{self.quartile})"
+    
+    def __str__(self):
+        return f"Category(id:{self.id})"
+
     def getQuartile(self):
         return self.quartile
-
+    
 class Area(IdentifiableEntity):
     def __init__(self, id):
         super().__init__(id)
+
+    def __repr__(self):
+        return f"Area({self.id})"
+    
+    def __str__(self):
+        return f"Area({self.id})"
