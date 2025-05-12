@@ -322,10 +322,26 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         self.fixed_graph = "GRAPH <https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph>"
         self.fixed_where = "?journal schema:issn ?issn; schema:eissn ?eissn; schema:name ?title; schema:publisher ?publisher; schema:language ?language; schema:license ?license; schema:award ?seal; schema:apc ?apc ."
 
+    # Check if the named graph exists in the triple store. 
+    # If the named graph exists, it will be used in the query. Otherwise, the query will be executed without the graph clause = the default graph.
+    # This method is called at the beginning of each query method for journals.
+    def graph_exists(self):
+        query = f"""
+        SELECT ?s WHERE {{ GRAPH <https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph> {{ ?s ?p ?o }} }}
+        LIMIT 1
+        """
+        response = get(self.dbPathOrUrl, query, True)
+        return not response.empty
+
     def getById(self, id):
+        if self.graph_exists():
+            graph_clause = self.fixed_graph
+        else:
+            graph_clause = ""
+        
         query = f"""
         {self.fixed_schema_select}
-        WHERE {{ {self.fixed_graph}
+        WHERE {{ {graph_clause}
         {{ {self.fixed_where}
             FILTER (?issn = "{id}" || ?eissn = "{id}")
         }}
@@ -336,9 +352,14 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journal_byId_df
     
     def getAllJournals(self):
+        if self.graph_exists():
+            graph_clause = self.fixed_graph
+        else:
+            graph_clause = ""
+        
         query = f"""
         {self.fixed_schema_select}
-        WHERE {{ {self.fixed_graph}
+        WHERE {{ {graph_clause}
         {{ {self.fixed_where}
         }}
         }}     
@@ -348,12 +369,17 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journals_df
 
     def getJournalsWithTitle(self, partialTitle):
+        if self.graph_exists():
+            graph_clause = self.fixed_graph
+        else:
+            graph_clause = ""
+        
         # Escape double quotes in partialTitle to avoid breaking the SPARQL query
         safe_partialTitle = partialTitle.replace('"', '\\"')
 
         query = f"""
         {self.fixed_schema_select}
-        WHERE {{ {self.fixed_graph}
+        WHERE {{ {graph_clause}
         {{ {self.fixed_where}
             FILTER (CONTAINS(LCASE(str(?title)), LCASE("{safe_partialTitle}")))
         }}
@@ -366,12 +392,17 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
 
 
     def getJournalsPublishedBy(self, partialName):
+        if self.graph_exists():
+            graph_clause = self.fixed_graph
+        else:
+            graph_clause = ""
+        
         # Escape double quotes in partialName to avoid breaking the SPARQL query
         safe_partialName = partialName.replace('"', '\\"')
 
         query = f"""
         {self.fixed_schema_select}
-        WHERE {{ {self.fixed_graph}
+        WHERE {{ {graph_clause}
         {{ {self.fixed_where}
             FILTER (CONTAINS(LCASE(str(?publisher)), LCASE("{safe_partialName}")))
         }}
@@ -404,10 +435,14 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
 
     # run function and store result
         regex_query = query_generator(licenses)
+        if self.graph_exists():
+            graph_clause = self.fixed_graph
+        else:
+            graph_clause = ""
     
         query = f"""
         {self.fixed_schema_select}
-        WHERE {{ {self.fixed_graph}
+        WHERE {{ {graph_clause}
         {{ {self.fixed_where}
             {regex_query} 
         }}
@@ -418,9 +453,14 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journals_withLicense_df
 
     def getJournalsWithAPC(self):
+        if self.graph_exists():
+            graph_clause = self.fixed_graph
+        else:
+            graph_clause = ""
+
         query = f"""
         {self.fixed_schema_select}
-        WHERE {{ {self.fixed_graph}  
+        WHERE {{ {graph_clause}  
         {{ {self.fixed_where}
             FILTER (?apc = "Yes")   
         }}
@@ -431,9 +471,13 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journals_withAPC_df
 
     def getJournalsWithDOAJSeal(self):
+        if self.graph_exists():
+            graph_clause = self.fixed_graph
+        else:
+            graph_clause = ""
         query = f"""
         {self.fixed_schema_select}
-        WHERE {{ {self.fixed_graph}  
+        WHERE {{ {graph_clause}  
         {{ {self.fixed_where}
             FILTER (?seal = "Yes")   
         }}
