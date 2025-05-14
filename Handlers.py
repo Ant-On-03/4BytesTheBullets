@@ -13,7 +13,7 @@ from pandas import DataFrame
 import re
 
 class Handler(object):
-    def __init__(self, dbPathOrUrl):
+    def __init__(self, dbPathOrUrl=None):
         self.dbPathOrUrl = dbPathOrUrl
     
     def getDbPathOrUrl(self):
@@ -26,14 +26,14 @@ class Handler(object):
 ## ------------------------------------------- UPLOAD HANDLERS ------------------------------------------- ## 
 
 class UploadHandler(Handler):
-    def __init__(self, dbPathOrUrl):
+    def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
 
     def pushDataToDb(self, path):
         pass
 
 class JournalUploadHandler(UploadHandler): #Shiho and Regina
-    def __init__(self, dbPathOrUrl):
+    def __init__(self, dbPathOrUrl=None):
        #create graph to hold journal triples
        self.graph=rdf.Graph(identifier=rdf.URIRef('https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph'))
       
@@ -96,21 +96,26 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
 
         return new_data_df      
    
-    def pushDataToDb(self, new_data_path, master_csv_path):
+    def pushDataToDb(self, new_data_path, master_csv_path = None):
         new_data_df = pd.read_csv(new_data_path, delimiter= ";" )
         store = SPARQLUpdateStore()
         #Open in terminal: java -server -Xmx1g -jar blazegraph.jar
 
         doaj_graph_uri = rdf.URIRef('https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph')
 
-        # Get the last used journal_id from the master CSV
-        last_index = self.getLastUsedIndexFromMaster(master_csv_path)
-
         #clean data
         new_data_df = self.cleanData(new_data_df)
 
-        # Add triples and assign journal_ids
-        df_with_ids = self.addTriples(new_data_df, start_idx=last_index + 1)
+        if master_csv_path ==  None:
+            # Add triples and assign journal_ids
+            df_with_ids = self.addTriples(new_data_df)
+
+        else:
+            # Get the last used journal_id from the master CSV
+            last_index = self.getLastUsedIndexFromMaster(master_csv_path)
+
+            # Add triples and assign journal_ids
+            df_with_ids = self.addTriples(new_data_df, start_idx=last_index + 1)
 
         #Open triple store 
         store.open((self.dbPathOrUrl, self.dbPathOrUrl))
@@ -118,6 +123,7 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
         #Add triples to triple store using Dataset 
         #Dataset stores a collection (dataset) of the graphs in a triplestore, the default graph and any name graph 
         triplestore_ds = rdf.Dataset(store=store)
+        
         #With the graph_uri store a specific named graph (context)
         doaj_graph = triplestore_ds.get_context(doaj_graph_uri)
 
@@ -127,24 +133,24 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
 
         print('Triples added to triplestore')
 
-        #Append new data to master CSV file
-        try:
-            master_df = pd.read_csv(master_csv_path)
-            updated_master_df = pd.concat([master_df, df_with_ids], ignore_index=True)
-        except FileNotFoundError:
-            updated_master_df = df_with_ids
+        #Append new data to master CSV file if file path exists
+        if master_csv_path != None:
+            try:
+                master_df = pd.read_csv(master_csv_path)
+                updated_master_df = pd.concat([master_df, df_with_ids], ignore_index=True)
+            except FileNotFoundError:
+                updated_master_df = df_with_ids
 
-        updated_master_df.to_csv(master_csv_path, index=False)
-        print('Master CSV updated with new journals')
+            updated_master_df.to_csv(master_csv_path, index=False)
+            print('Master CSV updated with new journals')
 
         return True
 
     
 class CategoryUploadHandler(UploadHandler):
-
-    def __init__(self, dbPathOrUrl):
+    def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
-        self.createTables()
+        # self.createTables()
         
     def createTables(self):
         ## ------------------------------------------- CREATING THE DATABASE ------------------------------------------- ##
@@ -204,6 +210,8 @@ class CategoryUploadHandler(UploadHandler):
         return True
         
     def pushDataToDb(self, filePath):
+        #create tables for database
+        self.createTables()
 
         # Creating the dataframes to be added to the database
         df = pd.read_json(filePath)
@@ -309,14 +317,14 @@ class CategoryUploadHandler(UploadHandler):
 ## ------------------------------------------- QUERY HANDLERS ------------------------------------------- ## 
 
 class QueryHandler(Handler):
-    def __init__(self, dbPathOrUrl):
+    def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
     
     def getById(self, id):
         pass
 
 class JournalQueryHandler(QueryHandler): #Shiho and Regina
-    def __init__(self, dbPathOrUrl):
+    def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
         self.fixed_schema_select = "PREFIX schema:<https://schema.org/> SELECT ?journal ?issn ?eissn ?title ?publisher ?language ?license ?seal ?apc"
         self.fixed_graph = "GRAPH <https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph>"
@@ -333,7 +341,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         response = get(self.dbPathOrUrl, query, True)
         return not response.empty
 
-    def getById(self, id):
+    def getById(self, id) -> DataFrame:
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -351,7 +359,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
 
         return journal_byId_df
     
-    def getAllJournals(self):
+    def getAllJournals(self) -> DataFrame:
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -368,7 +376,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         
         return journals_df
 
-    def getJournalsWithTitle(self, partialTitle):
+    def getJournalsWithTitle(self, partialTitle) -> DataFrame:
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -391,7 +399,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journals_byTitle_df
 
 
-    def getJournalsPublishedBy(self, partialName):
+    def getJournalsPublishedBy(self, partialName) -> DataFrame:
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -413,7 +421,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         
         return journals_byPub_df
 
-    def getJournalsWithLicense(self, licenses):
+    def getJournalsWithLicense(self, licenses) -> DataFrame:
         import itertools
         def query_generator(licenses):
         
@@ -452,7 +460,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         
         return journals_withLicense_df
 
-    def getJournalsWithAPC(self):
+    def getJournalsWithAPC(self) -> DataFrame:
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -470,7 +478,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         
         return journals_withAPC_df
 
-    def getJournalsWithDOAJSeal(self):
+    def getJournalsWithDOAJSeal(self) -> DataFrame:
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -489,7 +497,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
 
 class CategoryQueryHandler(QueryHandler): #Anton and Anouk
 
-    def __init__(self, dbPathOrUrl):
+    def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
 
     def getById(self, id:str) -> DataFrame:
@@ -513,12 +521,11 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
             """
 
             cursor.execute(query, (id, id))
-            # print("query:", query)
             journals = cursor.fetchall()
             df = pd.DataFrame(journals, columns=["issn", "eissn", "category_id", "quartile", "area_id"])
             conn.close()
+        
         else:
-            
             conn = connect(self.dbPathOrUrl)
             cursor = conn.cursor()
             query = """
@@ -554,8 +561,6 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
     
         return df
 
-
-
     def getAllAreas(self) -> DataFrame:
 
         # return all the areas in a database, with no repetitions.
@@ -569,9 +574,6 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         conn.close()
         
         return df
-
-        
-
 
     def getCategoriesWithQuartile(self, quartiles:set[str]) -> DataFrame:
 
@@ -607,29 +609,6 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         conn.close()
 
         return df
-        # This is in case what we wanted was the INTERSECTIO instead of the UNION.
-        query = """
-                    SELECT DISTINCT category_id 
-                    FROM categories_quartiles 
-                    WHERE quartile IN (?)
-                    """
-        for i in range(len(quartiles)-1):
-            query += """
-                    INTERSECT
-                    SELECT DISTINCT category_id 
-                    FROM categories_quartiles 
-                    WHERE quartile IN (?)
-                    """
-        print("query:", query)
-        # We use said query on the database.
-        cursor.execute(query, tuple(quartiles))
-        # We turn it into a Dataframe
-        categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["category_id"])
-        conn.close()
-        return df
-
-
 
     def getCategoriesAssignedToAreas(self, area_ids:set[str] ) -> DataFrame:
         if len(area_ids) == 0:
@@ -655,7 +634,6 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
                     })
 
                     """ 
-        # print(query)
 
         # We use said query on the database.
         cursor.execute(query, tuple(area_ids))
@@ -670,6 +648,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         if len(categories) == 0:
             # If no area is given, we return all the categories.
             return self.getAllAreas()
+        
         conn = connect(self.dbPathOrUrl)
         cursor = conn.cursor()
         query =  f"""

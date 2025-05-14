@@ -196,7 +196,7 @@ class FullQueryEngine(BasicQueryEngine):
     def __init__(self, journalQuery=None, categoryQuery=None):
         super().__init__(journalQuery, categoryQuery)
 
-    def getJournalsInCategoriesWithQuartile(self, category_ids, quartiles):
+    def getJournalsInCategoriesWithQuartile(self, category_ids, quartiles) -> list[Journal]:
         journals = []
         if len(category_ids) == 0 and len(quartiles) == 0:
             return self.getAllJournals()
@@ -223,7 +223,7 @@ class FullQueryEngine(BasicQueryEngine):
         return journals
 
 
-    def getJournalsInAreasWithLicense(self, areas_ids, licenses):
+    def getJournalsInAreasWithLicense(self, areas_ids, licenses) -> list[Journal]:
         journals = []
         if len(areas_ids) == 0 and len(licenses) == 0:
             return self.getAllJournals()
@@ -252,7 +252,7 @@ class FullQueryEngine(BasicQueryEngine):
             
             return journals
 
-    def getDiamondJournalsInAreasAndCategoriesWithQuartile(self, areas_ids, category_ids, quartiles):
+    def getDiamondJournalsInAreasAndCategoriesWithQuartile(self, areas_ids, category_ids, quartiles) -> list[Journal]:
         journals = []
         journalsWithAPC_l = self.getJournalsWithAPC()
         
