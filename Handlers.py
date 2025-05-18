@@ -13,19 +13,42 @@ from pandas import DataFrame
 import re
 
 class Handler(object):
+    """
+    Abstract class for handlers.
+    """
     def __init__(self, dbPathOrUrl=None):
         self.dbPathOrUrl = dbPathOrUrl
-    
+
+
     def getDbPathOrUrl(self):
+        """
+        Returns the path or URL of the database."""
         return self.dbPathOrUrl
 
+
     def setDbPathOrUrl(self, pathOrUrl):
+        """
+        Sets the path or URL of the database.
+        
+        
+        Args:
+            pathOrUrl (str): The path or URL of the database.
+        
+        Returns:
+            bool: True
+
+        """
+
         self.dbPathOrUrl = pathOrUrl
         return True
 
-## ------------------------------------------- UPLOAD HANDLERS ------------------------------------------- ## 
 
+## ------------------------------------------- UPLOAD HANDLERS ------------------------------------------- ## 
 class UploadHandler(Handler):
+    """
+    Abstract class for upload handlers.
+    This class is not meant to be used directly, but rather as a base class for other upload handlers.
+    """
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
 
@@ -33,6 +56,21 @@ class UploadHandler(Handler):
         pass
 
 class JournalUploadHandler(UploadHandler): #Shiho and Regina
+    """
+    A class which handles the upload of journal data to an external graph database
+    It reads csv data and creates RDF triples, connects to triplestore endpoint 
+    and pushes RDF triples to the triplestore.
+
+    Attributes:
+        dbPathOrUrl(str)=None:Path to database, optional
+
+    Methods:
+        getLastUsedIndexFromMaster(master_csv_path(str)) -> int
+        cleanData(new_data_df(Dataframe)) -> Dataframe
+        addTriples(new_data_df(Dataframe), start_idx(int)=0) -> Dataframe
+        pushDataToDb(new_data_path(str), master_csv_path(str) = None) -> bool
+
+    """
     def __init__(self, dbPathOrUrl=None):
        #create graph to hold journal triples
        self.graph=rdf.Graph(identifier=rdf.URIRef('https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph'))
@@ -51,18 +89,40 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
 
        super().__init__(dbPathOrUrl)
 
-    def getLastUsedIndexFromMaster(self, master_csv_path):
+    def getLastUsedIndexFromMaster(self, master_csv_path) -> int:
+        """
+        Used if more than one file is pushed, to get the last index number from the last file pushed.
+
+        Args:
+            master_csv_path(str):Path to master csv file
+
+        Return:
+            int
+        """
+
         try:
             df_master = pd.read_csv(master_csv_path)
+            #check if internal id column has been created
             if 'internal_id' in df_master.columns:
-                internal_id = df_master['journal_id'].str.extract(r'journal-(\d+)')[0].dropna().astype(int)
+                #extract the digits from the internal id string
+                internal_id = df_master['internal_id'].str.extract(r'journal-(\d+)')[0].dropna().astype(int)
                 return internal_id.max() if not internal_id.empty else -1
             else:
                 return -1
         except FileNotFoundError:
             return -1
     
-    def cleanData(self, new_data_df):
+    def cleanData(self, new_data_df) -> DataFrame:
+        """
+        Renames long column names and changes null cells to empty strings
+        Drops rows where both ISSN and EISSN columns are empty
+
+        Args:
+            new_data_df(Dataframe):Dataframe of data to be pushed
+
+        Return:
+            DataFrame
+        """
         #Make column names shorter for readability 
         new_data_df = new_data_df.rename(columns={'Journal ISSN (print version)':'Journal ISSN', 
                                 'Journal EISSN (online version)':'Journal EISSN',
@@ -76,12 +136,25 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
         print('Data cleaned')
         return new_data_df
     
-    def addTriples(self, new_data_df, start_idx=0):  
-        new_ids = []
+    def addTriples(self, new_data_df, start_idx=0) -> DataFrame:  
+        """
+        Creates RDF triples and add them to graph.
+        Creates internal ids for each triples and adds them to the dataframe
+
+        Args:
+            new_data_df(Dataframe):Dataframe of data to be pushed
+            start_idx(int)=0:Index from last dataframe pushed if more than one file has been used
+
+        Return:
+            DataFrame
+        """
+        #create list to store new internal id
+        internal_ids = []
+        #loop over each row with an enumeration starting from the start_idx input
         for i, (_, row) in enumerate(new_data_df.iterrows(), start=start_idx):
-            local_id = f"journal-{i}"
-            new_ids.append(local_id)
-            subj = rdf.URIRef(self.Journal + local_id)
+            new_id = f"journal-{i}"
+            internal_ids.append(new_id)
+            subj = rdf.URIRef(self.Journal + new_id)
             self.graph.add((subj, self.id_issn, rdf.Literal(row['Journal ISSN'])))  
             self.graph.add((subj, self.id_eissn, rdf.Literal(row["Journal EISSN"])))
             self.graph.add((subj, self.title, rdf.Literal(row["Journal title"])))
@@ -91,12 +164,23 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
             self.graph.add((subj, self.license, rdf.Literal(row["Journal license"])))
             self.graph.add((subj, self.apc, rdf.Literal(row["APC"])))
         
-        new_data_df['internal_id'] = new_ids  # Track assigned IDs
+        new_data_df['internal_id'] = internal_ids  # Track assigned IDs
         print('Graph populated')
 
         return new_data_df      
    
-    def pushDataToDb(self, new_data_path, master_csv_path = None):
+    def pushDataToDb(self, new_data_path, master_csv_path = None) -> bool:
+        """
+        Pushes triples to triplestore
+        Creates master csv file if path provided
+
+        Args:
+            new_data_path(str): file path to new data to be pushed
+            master_csv_path(str) = None: file path to master csv file to be created, optional 
+
+        Return:
+            bool
+        """
         new_data_df = pd.read_csv(new_data_path, delimiter= ";" )
         store = SPARQLUpdateStore()
         #Open in terminal: java -server -Xmx1g -jar blazegraph.jar
@@ -106,7 +190,7 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
         #clean data
         new_data_df = self.cleanData(new_data_df)
 
-        if master_csv_path ==  None:
+        if master_csv_path == None:
             # Add triples and assign journal_ids
             df_with_ids = self.addTriples(new_data_df)
 
@@ -148,21 +232,57 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
 
     
 class CategoryUploadHandler(UploadHandler):
+    """
+    Class to handle the upload of categories to the database.
+    
+    To handle JSON files in input and store their data in a SQLite database.
+    
+    Attributes:
+        dbPathOrUrl (str): The path or URL of the database.
+        
+    Methods:
+        setDbPathOrUrl(pathOrUrl): Sets the path or URL of the database.
+        createTables(): Creates the tables in the database.
+        pushDataToDb(filePath): Pushes the data from the JSON file to the database.
+        
+    """
+
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
+        # When we are given the path or url of the database, we create the tables.
         if dbPathOrUrl != None:
             self.createTables()
 
     
     def setDbPathOrUrl(self, pathOrUrl):
+        """
+        Sets the path or URL of the database.
+
+        Args:
+            pathOrUrl (str): The path or URL of the database.
+
+        Returns:        
+            bool: True
+            
+            """
         self.dbPathOrUrl = pathOrUrl
         self.createTables()
         return True
     
-        
+    ## ------------------------------------------- CREATING THE DATABASE ------------------------------------------- ##
+    # Creating a relational database to host the tables    
     def createTables(self):
-        ## ------------------------------------------- CREATING THE DATABASE ------------------------------------------- ##
-        # Creating a relational database to host the tables
+        """
+        Creates the tables in the database.
+        If the database already exists, it will be deleted and recreated.
+        
+        Args:
+            None
+
+        Returns:
+            bool: True
+            
+        """
 
         if os.path.exists(self.dbPathOrUrl):
             os.remove(self.dbPathOrUrl)
@@ -218,14 +338,26 @@ class CategoryUploadHandler(UploadHandler):
         return True
         
     def pushDataToDb(self, filePath):
+        """
+        Pushes the data from the JSON file to the database.
+
+        Args:
+            filePath (str): The path to the JSON file.
+        Returns:
+            bool: True
+
+        """
+
         #create tables for database
         # Creating the dataframes to be added to the database
         df = pd.read_json(filePath)
     
-        ## ------------------------------------------- JOURNAL DATAFRAME ------------------------------------------- ##
+        ## ------------------------------------------- JOURNAL DATAFRAME ----------------------------------------- ##
 
         # We chose as the primary key the firs id (if its not None) or the second one (if the first is None)
-        # This is to avoid creating duplicate primary keys in the database when we supplementing the database with an additional dataset
+        # This is to avoid creating duplicate primary keys in the database when we supplementing the database with an
+        # additional dataset
+
         df["journal_id"] = [row[0][0] if row[0][0] != None else row[0][1] for idx, row in df.iterrows()]
 
         ### WE DROP THE DUPLICATES
@@ -247,7 +379,7 @@ class CategoryUploadHandler(UploadHandler):
         area_df = pd.DataFrame(unique_areas, columns=["areas"])
         area_df.rename(columns={"areas": "area_id"}, inplace=True)
 
-        ## ------------------------------------------- AREAS_JOURNALS DATAFRAME ------------------------------------------- ##
+        ## ------------------------------------------- AREAS_JOURNALS DATAFRAME ---------------------------------- ##
 
         # We create a dataframe with the PRIMARY KEY for JOURNALS and for AREAS
         areas_journals_dataframe = df[['journal_id', 'areas']]
@@ -255,7 +387,7 @@ class CategoryUploadHandler(UploadHandler):
         areas_journals_dataframe = areas_journals_dataframe.explode("areas")
         areas_journals_dataframe.rename(columns={"areas": "area_id"}, inplace=True)
 
-        ## ------------------------------------------- CATEGORIES DATAFRAME ------------------------------------------- ##
+        ## ------------------------------------------- CATEGORIES DATAFRAME -------------------------------------- ##
 
         # Take the unique identifiers from the journals dataframe
         categories_dataframe = pd.DataFrame(journals_df['journal_id'])
@@ -269,7 +401,7 @@ class CategoryUploadHandler(UploadHandler):
         categories_dataframe = categories_dataframe.drop('categories', axis=1)
 
 
-        ############## ----------------- INSERTING DATA INTO THE DATABASE ----------------- ##############
+        ############## ------------------- INSERTING DATA INTO THE DATABASE -------------------------- ##############
         # Creating the connection to the database
         connectionToDb = connect(self.dbPathOrUrl)
         cursorToDb = connectionToDb.cursor()
@@ -304,25 +436,14 @@ class CategoryUploadHandler(UploadHandler):
         connectionToDb.close()
 
         return True
-    
-    def __str__(self):
-
-         # return all the categories in a database, with no repetitions.
-
-        conn = connect(self.dbPathOrUrl)
-        cursor = conn.cursor()
-        cursor.execute("SELECT category_id FROM categories;")
-        
-        categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["category_id"])
-
-        conn.close()
-    
-        return df
 
 ## ------------------------------------------- QUERY HANDLERS ------------------------------------------- ## 
 
 class QueryHandler(Handler):
+    """
+    Abstract class for query handlers.
+    This class is not meant to be used directly, but rather as a base class for other query handlers.
+    """
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
     
@@ -330,6 +451,25 @@ class QueryHandler(Handler):
         pass
 
 class JournalQueryHandler(QueryHandler): #Shiho and Regina
+    """
+    A class which handles SPARQL queries made to an external graph database.
+    Connects to a triplestore, retrieving journal data and creates dataframes from the queries
+
+    Attributes:
+        dbPathOrUrl(str)=None:Path to database, optional
+
+    Methods:
+        graph_exists() -> bool
+        getById(id(str)) -> DataFrame
+        getAllJournals() -> DataFrame
+        getJournalsWithTitle(partialTitle(str)) -> DataFrame
+        getJournalsPublishedBy(partialName(str)) -> DataFrame
+        getJournalsWithLicense(licenses(str)) -> DataFrame
+        getJournalsWithAPC() -> DataFrame
+        getJournalsWithDOAJSeal() -> DataFrame
+
+
+    """
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
         self.fixed_schema_select = "PREFIX schema:<https://schema.org/> SELECT ?journal ?issn ?eissn ?title ?publisher ?language ?license ?seal ?apc"
@@ -339,7 +479,20 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
     # Check if the named graph exists in the triple store. 
     # If the named graph exists, it will be used in the query. Otherwise, the query will be executed without the graph clause = the default graph.
     # This method is called at the beginning of each query method for journals.
-    def graph_exists(self):
+    def graph_exists(self) -> bool:
+        """
+        Checks if the named graph exists in the triple store. 
+        If the named graph exists, it will be used in the query. 
+        Otherwise, the query will be executed without the graph clause, therefore from the default graph.
+        This method is called at the beginning of each query method for the journals.
+
+        Args:
+            None
+
+        Return:
+            bool
+
+        """
         query = f"""
         SELECT ?s WHERE {{ GRAPH <https://github.com/Ant-On-03/4BytesTheBullets/DOAJGraph> {{ ?s ?p ?o }} }}
         LIMIT 1
@@ -348,6 +501,16 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return not response.empty
 
     def getById(self, id) -> DataFrame:
+        """
+        Gets the journal with the inputed id
+
+        Args:
+            id(str):id of journal - issn or eissn id 
+
+        Return:
+            DataFrame
+
+        """
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -366,6 +529,16 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journal_byId_df
     
     def getAllJournals(self) -> DataFrame:
+        """
+        Gets all journals
+
+        Args:
+            None 
+
+        Return:
+            DataFrame
+
+        """
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -383,6 +556,17 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journals_df
 
     def getJournalsWithTitle(self, partialTitle) -> DataFrame:
+        """
+        Gets journals with a title that contains the partial title input
+
+        Args:
+            partialTitle(str):partial title input 
+
+        Return:
+            DataFrame
+
+        """
+
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -406,6 +590,16 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
 
 
     def getJournalsPublishedBy(self, partialName) -> DataFrame:
+        """
+        Gets journals with a publisher that contains the partial name input
+
+        Args:
+            partialName(str):partial name input 
+
+        Return:
+            DataFrame
+
+        """
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -428,8 +622,28 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journals_byPub_df
 
     def getJournalsWithLicense(self, licenses) -> DataFrame:
+        """
+        Gets journals with licences that match all the licenses in the input set
+
+        Args:
+            licenses(set[str]):set of licences to check for
+
+        Return:
+            DataFrame
+
+        """
         import itertools
         def query_generator(licenses):
+            """
+            Generates a SPARQL filter using regex from the set of licenses
+
+            Args:
+                licenses(set[str]):set of licences to check for
+
+            Return:
+                str
+
+            """
         
         # create a list from the set to generate all combination patterns
             terms = list(licenses)
@@ -447,7 +661,7 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
             regex_filter = f'FILTER(REGEX(?license, "{regex}"))'
             return regex_filter
 
-    # run function and store result
+        # run function and store result
         regex_query = query_generator(licenses)
         if self.graph_exists():
             graph_clause = self.fixed_graph
@@ -467,6 +681,15 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journals_withLicense_df
 
     def getJournalsWithAPC(self) -> DataFrame:
+        """
+        Gets journals where the Article Processing Charge (APC) has been paid
+
+        Args:
+            None
+
+        Return:
+            DataFrame
+        """
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -485,6 +708,16 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
         return journals_withAPC_df
 
     def getJournalsWithDOAJSeal(self) -> DataFrame:
+        """
+        Gets journals with DOAJ seal
+
+        Args:
+            None
+
+        Return:
+            DataFrame
+
+        """
         if self.graph_exists():
             graph_clause = self.fixed_graph
         else:
@@ -502,12 +735,38 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
 
 
 class CategoryQueryHandler(QueryHandler): #Anton and Anouk
+    """
+    This class is used to handle the queries for categories and areas in the database.
+    
+
+    Attributes:
+        dbPathOrUrl (str): The path or URL of the database.
+
+    Methods:
+        getById(id): Returns the category or area with the given id.
+        getAllCategories(): Returns all the categories in the database.
+        getAllAreas(): Returns all the areas in the database.
+        getCategoriesWithQuartile(quartiles): Returns the categories with the given quartiles.
+        getCategoriesAssignedToAreas(area_ids): Returns the categories assigned to the given areas.
+        getAreasAssignedToCategories(categories): Returns the areas assigned to the given categories.
+        
+    """
 
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
 
     def getById(self, id:str) -> DataFrame:
+        """
+        Returns the category or area with the given id.
+
+        Args:
+            id (str): The id of the category or area.
         
+        Returns:
+            DataFrame: A dataframe with the category or area with the given id.
+        """
+
+        # Checks whether the id is a journal input, that is, an ISSN pr EISSN (4 digits, a hyphen, and 4 digits).
         if re.fullmatch(r"(?=.*\d)[\dX]{4}-[\dX]{4}", id):
             # RETURN A JOIN OF ALL THE TABLES THAT HAVE THE ID OF THE JOURNAL.
             # This is the query that will be used to get the journal with the id given.
@@ -553,6 +812,16 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getAllCategories(self) -> DataFrame:
+        """
+        Returns all the categories in the database.
+
+        Args:
+            None
+        Returns:
+            DataFrame: A dataframe with all the categories in the database.
+            The dataframe contains the columns: journal_id, category_id, quartile.
+
+        """
 
         # return all the categories in a database, with no repetitions.
 
@@ -568,6 +837,17 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getAllAreas(self) -> DataFrame:
+        """
+        Returns all the areas in the database.
+
+        Args:
+            None
+            
+        Returns:
+            DataFrame: A dataframe with all the areas in the database.
+            The dataframe contains the columns: journal_id, area_id.
+
+        """
 
         # return all the areas in a database, with no repetitions.
         conn = connect(self.dbPathOrUrl)
@@ -582,6 +862,18 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getCategoriesWithQuartile(self, quartiles:set[str]) -> DataFrame:
+        """
+        Returns the categories with the given quartiles.
+
+        Args:
+            quartiles (set[str]): The quartiles to filter the categories by.
+
+        Returns:
+            DataFrame: A dataframe with the categories with the given quartiles.
+            The dataframe contains the columns: journal_id, category_id, quartile.
+        
+        """
+
 
         if len(quartiles) == 0:
             # If no quartile is given, we return all the categories.
@@ -617,6 +909,19 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getCategoriesAssignedToAreas(self, area_ids:set[str] ) -> DataFrame:
+        """
+        Returns the categories assigned to the given areas.
+        
+        Args:
+            area_ids (set[str]): The ids of the areas to filter the categories by.
+        
+        Returns:
+            DataFrame: A dataframe with the categories assigned to the given areas.
+            The dataframe contains the columns: journal_id, category_id, quartile.
+            
+        """
+
+
         if len(area_ids) == 0:
             # If no area is given, we return all the categories.
             return self.getAllCategories()
@@ -650,6 +955,17 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getAreasAssignedToCategories(self, categories:set[str] ) -> DataFrame:
+        """
+        Returns the areas assigned to the given categories.
+        
+        Args:
+            categories (set[str]): The ids of the categories to filter the areas by.
+            
+        Returns:
+            DataFrame: A dataframe with the areas assigned to the given categories.
+            The dataframe contains the columns: journal_id, area_id.
+            
+        """
 
         if len(categories) == 0:
             # If no area is given, we return all the categories.
