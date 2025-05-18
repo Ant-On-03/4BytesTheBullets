@@ -30,8 +30,10 @@ class TestProjectBasic(unittest.TestCase):
     # launch of the database.
     journal = "resources" + sep + "test_doaj.csv"
     category = "resources" + sep + "scimago.json"
-    relational = "." + sep + "relational.db"
-    graph = "http://127.0.0.1:9999/blazegraph/sparql"
+    relational = "." + sep + "relational.db" 
+    graph = "http://10.5.0.2:9999/blazegraph/sparql"
+
+    # original SPARQL endpoint: http://127.0.0.1:9999/blazegraph/sparql
     
     def test_01_JournalUploadHandler(self):
         u = JournalUploadHandler()

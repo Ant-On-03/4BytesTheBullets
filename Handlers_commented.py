@@ -13,24 +13,48 @@ from pandas import DataFrame
 import re
 
 class Handler(object):
+    """
+    Abstract class for handlers.
+    """
     def __init__(self, dbPathOrUrl=None):
         self.dbPathOrUrl = dbPathOrUrl
-    
+
+
     def getDbPathOrUrl(self):
+        """
+        Returns the path or URL of the database."""
         return self.dbPathOrUrl
 
+
     def setDbPathOrUrl(self, pathOrUrl):
+        """
+        Sets the path or URL of the database.
+        
+        
+        Args:
+            pathOrUrl (str): The path or URL of the database.
+        
+        Returns:
+            bool: True
+
+        """
+
         self.dbPathOrUrl = pathOrUrl
         return True
 
-## ------------------------------------------- UPLOAD HANDLERS ------------------------------------------- ## 
 
+## ------------------------------------------- UPLOAD HANDLERS ------------------------------------------- ## 
 class UploadHandler(Handler):
+    """
+    Abstract class for upload handlers.
+    This class is not meant to be used directly, but rather as a base class for other upload handlers.
+    """
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
 
     def pushDataToDb(self, path):
         pass
+
 
 class JournalUploadHandler(UploadHandler): #Shiho and Regina
     def __init__(self, dbPathOrUrl=None):
@@ -148,21 +172,57 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
 
     
 class CategoryUploadHandler(UploadHandler):
+    """
+    Class to handle the upload of categories to the database.
+    
+    To handle JSON files in input and store their data in a SQLite database.
+    
+    Attributes:
+        dbPathOrUrl (str): The path or URL of the database.
+        
+    Methods:
+        setDbPathOrUrl(pathOrUrl): Sets the path or URL of the database.
+        createTables(): Creates the tables in the database.
+        pushDataToDb(filePath): Pushes the data from the JSON file to the database.
+        
+    """
+
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
+        # When we are given the path or url of the database, we create the tables.
         if dbPathOrUrl != None:
             self.createTables()
 
     
     def setDbPathOrUrl(self, pathOrUrl):
+        """
+        Sets the path or URL of the database.
+
+        Args:
+            pathOrUrl (str): The path or URL of the database.
+
+        Returns:        
+            bool: True
+            
+            """
         self.dbPathOrUrl = pathOrUrl
         self.createTables()
         return True
     
-        
+    ## ------------------------------------------- CREATING THE DATABASE ------------------------------------------- ##
+    # Creating a relational database to host the tables    
     def createTables(self):
-        ## ------------------------------------------- CREATING THE DATABASE ------------------------------------------- ##
-        # Creating a relational database to host the tables
+        """
+        Creates the tables in the database.
+        If the database already exists, it will be deleted and recreated.
+        
+        Args:
+            None
+
+        Returns:
+            bool: True
+            
+        """
 
         if os.path.exists(self.dbPathOrUrl):
             os.remove(self.dbPathOrUrl)
@@ -218,14 +278,26 @@ class CategoryUploadHandler(UploadHandler):
         return True
         
     def pushDataToDb(self, filePath):
+        """
+        Pushes the data from the JSON file to the database.
+
+        Args:
+            filePath (str): The path to the JSON file.
+        Returns:
+            bool: True
+
+        """
+
         #create tables for database
         # Creating the dataframes to be added to the database
         df = pd.read_json(filePath)
     
-        ## ------------------------------------------- JOURNAL DATAFRAME ------------------------------------------- ##
+        ## ------------------------------------------- JOURNAL DATAFRAME ----------------------------------------- ##
 
         # We chose as the primary key the firs id (if its not None) or the second one (if the first is None)
-        # This is to avoid creating duplicate primary keys in the database when we supplementing the database with an additional dataset
+        # This is to avoid creating duplicate primary keys in the database when we supplementing the database with an
+        # additional dataset
+
         df["journal_id"] = [row[0][0] if row[0][0] != None else row[0][1] for idx, row in df.iterrows()]
 
         ### WE DROP THE DUPLICATES
@@ -247,7 +319,7 @@ class CategoryUploadHandler(UploadHandler):
         area_df = pd.DataFrame(unique_areas, columns=["areas"])
         area_df.rename(columns={"areas": "area_id"}, inplace=True)
 
-        ## ------------------------------------------- AREAS_JOURNALS DATAFRAME ------------------------------------------- ##
+        ## ------------------------------------------- AREAS_JOURNALS DATAFRAME ---------------------------------- ##
 
         # We create a dataframe with the PRIMARY KEY for JOURNALS and for AREAS
         areas_journals_dataframe = df[['journal_id', 'areas']]
@@ -255,7 +327,7 @@ class CategoryUploadHandler(UploadHandler):
         areas_journals_dataframe = areas_journals_dataframe.explode("areas")
         areas_journals_dataframe.rename(columns={"areas": "area_id"}, inplace=True)
 
-        ## ------------------------------------------- CATEGORIES DATAFRAME ------------------------------------------- ##
+        ## ------------------------------------------- CATEGORIES DATAFRAME -------------------------------------- ##
 
         # Take the unique identifiers from the journals dataframe
         categories_dataframe = pd.DataFrame(journals_df['journal_id'])
@@ -269,7 +341,7 @@ class CategoryUploadHandler(UploadHandler):
         categories_dataframe = categories_dataframe.drop('categories', axis=1)
 
 
-        ############## ----------------- INSERTING DATA INTO THE DATABASE ----------------- ##############
+        ############## ------------------- INSERTING DATA INTO THE DATABASE -------------------------- ##############
         # Creating the connection to the database
         connectionToDb = connect(self.dbPathOrUrl)
         cursorToDb = connectionToDb.cursor()
@@ -304,30 +376,22 @@ class CategoryUploadHandler(UploadHandler):
         connectionToDb.close()
 
         return True
-    
-    def __str__(self):
 
-         # return all the categories in a database, with no repetitions.
 
-        conn = connect(self.dbPathOrUrl)
-        cursor = conn.cursor()
-        cursor.execute("SELECT category_id FROM categories;")
-        
-        categories = cursor.fetchall()
-        df = pd.DataFrame(categories, columns=["category_id"])
-
-        conn.close()
-    
-        return df
 
 ## ------------------------------------------- QUERY HANDLERS ------------------------------------------- ## 
 
 class QueryHandler(Handler):
+    """
+    Abstract class for query handlers.
+    This class is not meant to be used directly, but rather as a base class for other query handlers.
+    """
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
     
     def getById(self, id):
         pass
+
 
 class JournalQueryHandler(QueryHandler): #Shiho and Regina
     def __init__(self, dbPathOrUrl=None):
@@ -502,12 +566,38 @@ class JournalQueryHandler(QueryHandler): #Shiho and Regina
 
 
 class CategoryQueryHandler(QueryHandler): #Anton and Anouk
+    """
+    This class is used to handle the queries for categories and areas in the database.
+    
+
+    Attributes:
+        dbPathOrUrl (str): The path or URL of the database.
+
+    Methods:
+        getById(id): Returns the category or area with the given id.
+        getAllCategories(): Returns all the categories in the database.
+        getAllAreas(): Returns all the areas in the database.
+        getCategoriesWithQuartile(quartiles): Returns the categories with the given quartiles.
+        getCategoriesAssignedToAreas(area_ids): Returns the categories assigned to the given areas.
+        getAreasAssignedToCategories(categories): Returns the areas assigned to the given categories.
+        
+    """
 
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
 
     def getById(self, id:str) -> DataFrame:
+        """
+        Returns the category or area with the given id.
+
+        Args:
+            id (str): The id of the category or area.
         
+        Returns:
+            DataFrame: A dataframe with the category or area with the given id.
+        """
+
+        # Checks whether the id is a journal input, that is, an ISSN pr EISSN (4 digits, a hyphen, and 4 digits).
         if re.fullmatch(r"(?=.*\d)[\dX]{4}-[\dX]{4}", id):
             # RETURN A JOIN OF ALL THE TABLES THAT HAVE THE ID OF THE JOURNAL.
             # This is the query that will be used to get the journal with the id given.
@@ -524,7 +614,7 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
             WHERE (j.issn = ? OR j.eissn = ?);
         
             
-            """
+            """"
 
             cursor.execute(query, (id, id))
             journals = cursor.fetchall()
@@ -553,6 +643,16 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getAllCategories(self) -> DataFrame:
+        """
+        Returns all the categories in the database.
+
+        Args:
+            None
+        Returns:
+            DataFrame: A dataframe with all the categories in the database.
+            The dataframe contains the columns: journal_id, category_id, quartile.
+
+        """
 
         # return all the categories in a database, with no repetitions.
 
@@ -568,6 +668,17 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getAllAreas(self) -> DataFrame:
+        """
+        Returns all the areas in the database.
+
+        Args:
+            None
+            
+        Returns:
+            DataFrame: A dataframe with all the areas in the database.
+            The dataframe contains the columns: journal_id, area_id.
+
+        """
 
         # return all the areas in a database, with no repetitions.
         conn = connect(self.dbPathOrUrl)
@@ -582,6 +693,18 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getCategoriesWithQuartile(self, quartiles:set[str]) -> DataFrame:
+        """
+        Returns the categories with the given quartiles.
+
+        Args:
+            quartiles (set[str]): The quartiles to filter the categories by.
+
+        Returns:
+            DataFrame: A dataframe with the categories with the given quartiles.
+            The dataframe contains the columns: journal_id, category_id, quartile.
+        
+        """
+
 
         if len(quartiles) == 0:
             # If no quartile is given, we return all the categories.
@@ -617,6 +740,19 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getCategoriesAssignedToAreas(self, area_ids:set[str] ) -> DataFrame:
+        """
+        Returns the categories assigned to the given areas.
+        
+        Args:
+            area_ids (set[str]): The ids of the areas to filter the categories by.
+        
+        Returns:
+            DataFrame: A dataframe with the categories assigned to the given areas.
+            The dataframe contains the columns: journal_id, category_id, quartile.
+            
+        """
+
+
         if len(area_ids) == 0:
             # If no area is given, we return all the categories.
             return self.getAllCategories()
@@ -650,6 +786,17 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         return df
 
     def getAreasAssignedToCategories(self, categories:set[str] ) -> DataFrame:
+        """
+        Returns the areas assigned to the given categories.
+        
+        Args:
+            categories (set[str]): The ids of the categories to filter the areas by.
+            
+        Returns:
+            DataFrame: A dataframe with the areas assigned to the given categories.
+            The dataframe contains the columns: journal_id, area_id.
+            
+        """
 
         if len(categories) == 0:
             # If no area is given, we return all the categories.
