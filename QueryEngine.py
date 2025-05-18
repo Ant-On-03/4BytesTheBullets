@@ -140,10 +140,6 @@ class BasicQueryEngine(object):
 
             return None
             
-
-
-
-
     def getAllJournals(self) -> list[Journal]:
         """
         Retrieves all journal entities from the journal query handlers.
@@ -315,10 +311,34 @@ class BasicQueryEngine(object):
 
 
 class FullQueryEngine(BasicQueryEngine):
+    """
+    FullQueryEngine is a subclass of BasicQueryEngine that provides additional methods to query and manipulate journal and category data.
+
+    Attributes:
+        journalQuery (list): A list of journal query handlers.
+        categoryQuery (list): A list of category query handlers.
+
+    Methods:
+        __init__(journalQuery=None, categoryQuery=None): Initializes the FullQueryEngine with optional journal and category query handlers.
+        getJournalsInCategoriesWithQuartile(category_ids, quartiles): Retrieves journals in specific categories with quartiles.
+        getJournalsInAreasWithLicense(areas_ids, licenses): Retrieves journals in specific areas with licenses.
+        getDiamondJournalsInAreasAndCategoriesWithQuartile(areas_ids, category_ids, quartiles): Retrieves diamond journals in areas and categories with quartiles.
+    """
+
     def __init__(self, journalQuery=None, categoryQuery=None):
         super().__init__(journalQuery, categoryQuery)
 
     def getJournalsInCategoriesWithQuartile(self, category_ids, quartiles) -> list[Journal]:
+        """
+        Retrieves journals in specific categories with quartiles from the journal and category query handlers.
+        
+        Args:
+            category_ids (list): A list of category IDs to filter journals by.
+            quartiles (list): A list of quartiles to filter journals by.
+        Returns:
+            list[Journal]: A list of journals in the specified categories with the specified quartiles.
+        """
+
         journals = []
         if len(category_ids) == 0 and len(quartiles) == 0:
             return self.getAllJournals()
@@ -346,6 +366,15 @@ class FullQueryEngine(BasicQueryEngine):
 
 
     def getJournalsInAreasWithLicense(self, areas_ids, licenses) -> list[Journal]:
+        """
+        Retrieves journals in specific areas with licenses from the journal and category query handlers.
+
+        Args:
+            areas_ids (list): A list of area IDs to filter journals by.
+            licenses (list): A list of licenses to filter journals by. 
+        Returns:
+            list[Journal]: A list of journals in the specified areas with the specified licenses.
+        """
         journals = []
         if len(areas_ids) == 0 and len(licenses) == 0:
             return self.getAllJournals()
@@ -383,6 +412,16 @@ class FullQueryEngine(BasicQueryEngine):
             return journals
 
     def getDiamondJournalsInAreasAndCategoriesWithQuartile(self, areas_ids, category_ids, quartiles) -> list[Journal]:
+        """
+        Retrieves diamond journals in specific areas and categories with quartiles from the journal and category query handlers.
+        Args:
+            areas_ids (list): A list of area IDs to filter journals by.
+            category_ids (list): A list of category IDs to filter journals by.
+            quartiles (list): A list of quartiles to filter journals by.
+        Returns:
+            list[Journal]: A list of diamond journals in the specified areas and categories with the specified quartiles.
+        """
+
         journals = []
         journalsWithAPC_l = self.getJournalsWithAPC()
         
