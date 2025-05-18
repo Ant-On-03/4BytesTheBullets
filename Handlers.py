@@ -150,7 +150,15 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
 class CategoryUploadHandler(UploadHandler):
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
-        # self.createTables()
+        if dbPathOrUrl != None:
+            self.createTables()
+
+    
+    def setDbPathOrUrl(self, pathOrUrl):
+        self.dbPathOrUrl = pathOrUrl
+        self.createTables()
+        return True
+    
         
     def createTables(self):
         ## ------------------------------------------- CREATING THE DATABASE ------------------------------------------- ##
@@ -211,8 +219,6 @@ class CategoryUploadHandler(UploadHandler):
         
     def pushDataToDb(self, filePath):
         #create tables for database
-        self.createTables()
-
         # Creating the dataframes to be added to the database
         df = pd.read_json(filePath)
     
