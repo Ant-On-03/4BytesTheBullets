@@ -428,8 +428,12 @@ class FullQueryEngine(BasicQueryEngine):
         journals = []
         journalsWithAPC_l = self.getJournalsWithAPC()
         
+        # Filter out journals WITH APC to get diamond journals (those WITHOUT APC)
+        allJournals = self.getAllJournals()
+        diamondJournals = [j for j in allJournals if j not in journalsWithAPC_l]
+
         if len(areas_ids) == 0 and len(category_ids) == 0 and len(quartiles) == 0:
-            return journalsWithAPC_l
+            return diamondJournals
         
                 
         else:
@@ -454,7 +458,7 @@ class FullQueryEngine(BasicQueryEngine):
 
             #find all journals with APC in specified areas
             jInAreas_l = []
-            for j in journalsWithAPC_l:
+            for j in diamondJournals:
                 for a in areas:
                     if a.getIds()[0] in j.getIds():
                         j.setAreas([a])
