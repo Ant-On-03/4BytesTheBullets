@@ -348,7 +348,6 @@ class FullQueryEngine(BasicQueryEngine):
             for cat in catWithQ:
                 j = self.getEntityById(cat.getIds()[0])
                 if j != None:
-                    j.setCategories([cat])
                     journals.append(j)
 
         elif len(quartiles) == 0:
@@ -356,7 +355,6 @@ class FullQueryEngine(BasicQueryEngine):
             for cat in categories:
                 j = self.getEntityById(cat.getIds()[0])
                 if j != None:
-                    j.setCategories([cat])
                     journals.append(j)
 
         else:
@@ -365,7 +363,6 @@ class FullQueryEngine(BasicQueryEngine):
                 if cat.getIds()[1] in category_ids:
                     j = self.getEntityById(cat.getIds()[0])
                     if j != None:
-                        j.setCategories([cat])
                         journals.append(j)
 
         return journals
@@ -433,47 +430,184 @@ class FullQueryEngine(BasicQueryEngine):
         
         # Filter out journals WITH APC to get diamond journals (those WITHOUT APC)
         allJournals = self.getAllJournals()
-        diamondJournals = [j for j in allJournals if j not in journalsWithAPC_l]
+        diamondJournals = [j for j in allJournals if j is not j.hasAPC()]
+
 
         if len(areas_ids) == 0 and len(category_ids) == 0 and len(quartiles) == 0:
-            return diamondJournals
-        
-                
-        else:
-
-            if len(category_ids) == 0 or len(quartiles) == 0:
-                jInCatWithQ_l = self.getAllCategories()
-            else:
-                jInCatWithQ_l = self.getJournalsInCategoriesWithQuartile(category_ids, quartiles)
-
-            #find all specified areas
-
-            if len(areas_ids) == 0:
-                areas = self.getAllAreas()
-
-            else:
-                areas = []
-                for area in self.getAllAreas():
-                    if area.getIds()[1] in areas_ids:
-                        areas.append(area)
-
-
-
-            #find all journals with APC in specified areas
-            jInAreas_l = []
+            areas = self.getAllAreas()
+            categories = self.getAllCategories()
             for j in diamondJournals:
                 for a in areas:
                     if a.getIds()[0] in j.getIds():
                         j.setAreas([a])
-                        jInAreas_l.append(j)
-
-            #find all journals with APC in specified areas in category with quartile
-
-            for j in jInAreas_l:
-                for jCat in jInCatWithQ_l:
-                    if j.getIds() == jCat.getIds():
-                        journals.append(j)
+                        for c in categories:
+                            if c.getIds()[0] == j.getIds()[0]:
+                                j.setCategories([c])
+                                journals.append(j)
 
             return journals
+        
+        elif len(areas_ids) == 0 and len(category_ids) == 0:
+            categories = self.getCategoriesWithQuartile(quartiles)
+            cat_ids = [c.getIds()[1] for c in categories]
+            areas = self.getAreasAssignedToCategories(set(cat_ids))
+            for j in diamondJournals:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas([a])
+                        for c in categories:
+                            if c.getIds()[0] == j.getIds()[0]:
+                                j.setCategories([c])
+                                journals.append(j)
+            return journals
+        
+        elif len(areas_ids) == 0 and len(quartiles) == 0:
+            all_categories = self.getAllCategories()
+            categories = []
+            for c in all_categories:
+                if c.getIds()[1] in category_ids:
+                    categories.append(c)
+            cat_ids = [c.getIds()[1] for c in categories]
+            areas = self.getAreasAssignedToCategories(set(cat_ids))
+            for j in diamondJournals:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas([a])
+                        for c in categories:
+                            if c.getIds()[0] == j.getIds()[0]:
+                                j.setCategories([c])
+                                journals.append(j)
+            return journals
+        
+        elif len(areas_ids) == 0:
+            categories = self.getCategoriesWithQuartile(quartiles)
+            cat_ids = [c.getIds()[1] for c in categories]
+            areas = self.getAreasAssignedToCategories(set(cat_ids))
+            for j in diamondJournals:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas([a])
+                        for c in categories:
+                            if c.getIds()[0] == j.getIds()[0]:
+                                j.setCategories([c])
+                                journals.append(j)
+            return journals
+        
+        elif len(category_ids) == 0 and len(quartiles) == 0:
+            all_areas = self.getAllAreas()
+            areas = []
+            for a in all_areas:
+                if a.getIds()[1] in areas_ids:
+                    areas.append(a)
+            a_ids = [a.getIds()[1] for a in areas]
+            categories = self.getCategoriesAssignedToAreas(set(a_ids))
+            for j in diamondJournals:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas([a])
+                        for c in categories:
+                            if c.getIds()[0] == j.getIds()[0]:
+                                j.setCategories([c])
+                                journals.append(j)
+            
+            return journals
+        
+        elif len(category_ids) == 0:
+            all_areas = self.getAllAreas()
+            areas = []
+            for a in all_areas:
+                if a.getIds()[1] in areas_ids:
+                    areas.append(a)
+            categories = self.getCategoriesWithQuartile(quartiles)
+            for j in diamondJournals:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas([a])
+                        for c in categories:
+                            if c.getIds()[0] == j.getIds()[0]:
+                                j.setCategories([c])
+                                journals.append(j)
+            
+            return journals
+        
+        elif len(quartiles) == 0:
+            all_categories = self.getAllCategories()
+            categories = []
+            for c in all_categories:
+                if c.getIds()[1] in category_ids:
+                    categories.append(c)
+            all_areas = self.getAllAreas()
+            areas = []
+            for a in all_areas:
+                if a.getIds()[1] in areas_ids:
+                    areas.append(a)
+            for j in diamondJournals:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas([a])
+                        for c in categories:
+                            if c.getIds()[0] == j.getIds()[0]:
+                                j.setCategories([c])
+                                journals.append(j)
+
+            return journals
+        
+        else:
+            categories = self.getCategoriesWithQuartile(quartiles)
+            all_areas = self.getAllAreas()
+            areas = []
+            for a in all_areas:
+                if a.getIds()[1] in areas_ids:
+                    areas.append(a)
+            for j in diamondJournals:
+                for a in areas:
+                    if a.getIds()[0] in j.getIds():
+                        j.setAreas([a])
+                        for c in categories:
+                            if c.getIds()[0] == j.getIds()[0]:
+                                j.setCategories([c])
+                                journals.append(j)
+            return journals
+        # if len(areas_ids) == 0 and len(category_ids) == 0 and len(quartiles) == 0:
+        #     return diamondJournals
+
+                
+        # else:
+
+        #     if len(category_ids) == 0 or len(quartiles) == 0:
+        #         jInCatWithQ_l = self.getAllCategories()
+                
+        #     else:
+        #         jInCatWithQ_l = self.getJournalsInCategoriesWithQuartile(category_ids, quartiles)
+
+        #     #find all specified areas
+
+        #     if len(areas_ids) == 0:
+        #         areas = self.getAllAreas()
+
+        #     else:
+        #         areas = []
+        #         for area in self.getAllAreas():
+        #             if area.getIds()[1] in areas_ids:
+        #                 areas.append(area)
+
+
+
+        #     #find all journals with APC in specified areas
+        #     jInAreas_l = []
+        #     for j in diamondJournals:
+        #         for a in areas:
+        #             if a.getIds()[0] in j.getIds():
+        #                 j.setAreas([a])
+        #                 jInAreas_l.append(j)
+
+        #     #find all journals with APC in specified areas in category with quartile
+
+        #     for j in jInAreas_l:
+        #         for jCat in jInCatWithQ_l:
+        #             if j.getIds() == jCat.getIds():
+        #                 journals.append(j)
+
+        #     return journals
             
             
