@@ -348,6 +348,7 @@ class FullQueryEngine(BasicQueryEngine):
             for cat in catWithQ:
                 j = self.getEntityById(cat.getIds()[0])
                 if j != None:
+                    j.setCategories([cat])
                     journals.append(j)
 
         elif len(quartiles) == 0:
@@ -355,6 +356,7 @@ class FullQueryEngine(BasicQueryEngine):
             for cat in categories:
                 j = self.getEntityById(cat.getIds()[0])
                 if j != None:
+                    j.setCategories([cat])
                     journals.append(j)
 
         else:
@@ -363,6 +365,7 @@ class FullQueryEngine(BasicQueryEngine):
                 if cat.getIds()[1] in category_ids:
                     j = self.getEntityById(cat.getIds()[0])
                     if j != None:
+                        j.setCategories([cat])
                         journals.append(j)
 
         return journals
