@@ -161,6 +161,7 @@ class BasicQueryEngine(object):
         return alljournals
 
     def getJournalsWithTitle(self, partialTitle) -> list[Journal]:
+
         journalsWithTitle = []
         for j_queryHandler in self.journalQuery:
             journals_df = j_queryHandler.getJournalsWithTitle(partialTitle)
@@ -254,7 +255,7 @@ class BasicQueryEngine(object):
         Retrieves categories with a specific quartile from the category query handlers.
 
         Args:
-            quartiles (list): A list of quartiles to filter categories by.
+            quartiles (set): A set of quartiles to filter categories by.
 
         Returns:
             list[Category]: A list of categories with the specified quartile.
@@ -274,7 +275,7 @@ class BasicQueryEngine(object):
         Retrieves categories assigned to specific areas from the category query handlers.
 
         Args:
-            area_ids (list): A list of area IDs to filter categories by.
+            area_ids (set): A set of area IDs to filter categories by.
 
         Returns:
             list[Category]: A list of categories assigned to the specified areas.
@@ -295,7 +296,7 @@ class BasicQueryEngine(object):
         Retrieves areas assigned to specific categories from the category query handlers.
         
         Args:
-            category_ids (list): A list of category IDs to filter areas by.
+            category_ids (set): A set of category IDs to filter areas by.
         
         Returns:
             list[Area]: A list of areas assigned to the specified categories.
@@ -430,7 +431,7 @@ class FullQueryEngine(BasicQueryEngine):
         
         # Filter out journals WITH APC to get diamond journals (those WITHOUT APC)
         allJournals = self.getAllJournals()
-        diamondJournals = [j for j in allJournals if j is not j.hasAPC()]
+        diamondJournals = [j for j in allJournals if not j.hasAPC()]
 
 
         if len(areas_ids) == 0 and len(category_ids) == 0 and len(quartiles) == 0:
