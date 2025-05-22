@@ -181,7 +181,8 @@ class JournalUploadHandler(UploadHandler): #Shiho and Regina
         Return:
             bool
         """
-        new_data_df = pd.read_csv(new_data_path, delimiter= ";" )
+        new_data_df = pd.read_csv(new_data_path)
+        # add delimiter= ";" if the csv file is separated by semicolons
         store = SPARQLUpdateStore()
         #Open in terminal: java -server -Xmx1g -jar blazegraph.jar
 
