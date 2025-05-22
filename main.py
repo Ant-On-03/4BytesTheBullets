@@ -8,7 +8,7 @@ from QueryEngine import FullQueryEngine
 # database using the related source data
 rel_path = "relational.db"
 cat = CategoryUploadHandler(rel_path)
-cat.pushDataToDb("resources/test_scimago.json")
+cat.pushDataToDb("resources/scimago.json")
 print("relational database created")
 # Please remember that one could, in principle, push one or more files
 # calling the method one or more times (even calling the method twice
@@ -16,7 +16,7 @@ print("relational database created")
 
 # Then, create the graph database (remember first to run the
 # Blazegraph instance) using the related source data
-grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
+grp_endpoint = "http://10.5.0.2:9999/blazegraph/sparql"
 jou = JournalUploadHandler(grp_endpoint)
 jou.pushDataToDb("resources/test_doaj.csv", "master.csv")
 # Please remember that one could, in principle, push one or more files
@@ -44,4 +44,5 @@ result_q6 = que.getJournalsInCategoriesWithQuartile({"Artificial Intelligence", 
 result_q7 = que.getJournalsInAreasWithLicense({"Agricultural and Biological Sciences", "Biochemistry, Genetics and Molecular Biology"}, {"CC BY", "CC BY-NC-ND"})
 result_q8 = que.getDiamondJournalsInAreasAndCategoriesWithQuartile({"Medicine", "Nursing"},{"Medicine (miscellaneous)", "Nutrition and Dietetics"},{"Q4"})
 
+print(result_q8)
 
