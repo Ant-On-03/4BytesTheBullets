@@ -92,20 +92,24 @@ class BasicQueryEngine(object):
         """
 
         if re.fullmatch(r"(?=.*\d)[\dX]{4}-[\dX]{4}", id):
+            found_journal = False
+            journal = None
+
             for j_queryHandler in self.journalQuery:
                 journalWithId_df = j_queryHandler.getById(id)
                 if not journalWithId_df.empty:
+
                     for _, row in journalWithId_df.iterrows():
                         id = []
                         if pd.notna(row['issn']) == True:
                             id.append(row['issn'])
                         if pd.notna(row['eissn']) == True:
                             id.append(row['eissn'])
-                        journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
-                else:
-                    journal = None
 
-            if journal != None:
+                        found_journal = True
+                        journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                
+            if found_journal:
                 for c_queryHandler in self.categoryQuery:
                     categoryWithId_df = c_queryHandler.getById(id)
                     if not categoryWithId_df.empty:
@@ -124,20 +128,21 @@ class BasicQueryEngine(object):
                         area = None
             
             return journal
-            
-        else:
-            category = None
-            area = None
-            for c_queryHandler in self.categoryQuery:
-                categoryWithId_df = c_queryHandler.getById(id)
-                if not categoryWithId_df.empty:
-                    if id in categoryWithId_df['category_id'].values:
-                        category = Category([id])
-                        return category
-                    
-                    elif id in categoryWithId_df['area_id'].values:
-                        area = Area([id])
-                        return area
+
+        
+        category = None
+        area = None
+        
+        for c_queryHandler in self.categoryQuery:
+            categoryWithId_df = c_queryHandler.getById(id)
+            if not categoryWithId_df.empty:
+                if id in categoryWithId_df['category_id'].values:
+                    category = Category([id])
+                    return category
+                
+                elif id in categoryWithId_df['area_id'].values:
+                    area = Area([id])
+                    return area
 
                 # else:
                 #     category = None
