@@ -75,10 +75,10 @@ class Category(IdentifiableEntity):
         super().__init__(id)
 
     def __repr__(self):
-        return f"Category(id:{self.id}, quartile:{self.journal_quartile})"
+        return f"Category({self.id})"
     
     def __str__(self):
-        return f"Category(id:{self.id})"
+        return f"Category({self.id})"
     
     def setJournalQuartile(self, journal_quartile):
         self.journal_quartile = journal_quartile
@@ -94,7 +94,7 @@ class Area(IdentifiableEntity):
         super().__init__(id)
 
     def __repr__(self):
-        return f"Area({self.id}), journals:{self.journal})"
+        return f"Area({self.id})"
     
     def __str__(self):
         return f"Area({self.id})"
