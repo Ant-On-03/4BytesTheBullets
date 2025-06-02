@@ -70,8 +70,8 @@ class Journal(IdentifiableEntity):
         return self.area
 
 class Category(IdentifiableEntity):
-    def __init__(self, id, quartile = None):
-        self.quartile = quartile
+    def __init__(self, id, journal_quartile:dict  = {}):
+        self.journal_quartile = journal_quartile
         super().__init__(id)
 
     def __repr__(self):
@@ -79,12 +79,18 @@ class Category(IdentifiableEntity):
     
     def __str__(self):
         return f"Category(id:{self.id})"
+    
+    def setJournalQuartile(self, journal_quartile):
+        self.journal_quartile = journal_quartile
+        return True
 
-    def getQuartile(self):
-        return self.quartile
+    def getJournalQuartile(self):
+        return self.journal_quartile
+    
     
 class Area(IdentifiableEntity):
-    def __init__(self, id):
+    def __init__(self, id, journal = []):
+        self.journal = journal
         super().__init__(id)
 
     def __repr__(self):
@@ -92,3 +98,10 @@ class Area(IdentifiableEntity):
     
     def __str__(self):
         return f"Area({self.id})"
+    
+    def setJournal(self, journal):
+        self.journal = journal
+        return True
+
+    def getJournal(self):
+        return self.journal

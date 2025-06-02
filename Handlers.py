@@ -971,7 +971,12 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         categories = cursor.fetchall()
         df = pd.DataFrame(categories, columns=["journal_id", "category_id", "quartile"])
         conn.close()
-        return df
+
+        result = df.groupby('category_id').apply(
+            lambda x: dict(zip(x['journal_id'], x['quartile']))
+        ).reset_index(name='journal_quartile_dict')
+    
+        return result
 
     def getAreasAssignedToCategories(self, categories:set[str] ) -> DataFrame:
         """
@@ -1013,7 +1018,11 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         areas = cursor.fetchall()
         df = pd.DataFrame(areas, columns=["journal_id", "area_id"])
         conn.close()
-        return df
+        result = df.groupby('area_id').apply(
+            lambda x: list(x['journal_id'])
+        ).reset_index(name='journal')
+    
+        return result
     
 
  # here we will test the method getAllCategories
@@ -1052,27 +1061,25 @@ def testForCategoryQueryHandler():
     # areas = QueryHandler.getAllAreas()
     # print("All areas:", areas)
 
-    # categories=QueryHandler.getAllCategories()
-    # Print all rows and columns (no truncation)
-    # pd.set_option('display.max_rows', None)
-    # pd.set_option('display.max_columns', None)
-    # pd.set_option('display.max_colwidth', None)  # Prevent truncation of long strings (e.g., dicts)
-    # pd.set_option('display.width', None)
-    # print("All categories:", categories)
-
-    categories = QueryHandler.getCategoriesWithQuartile({"Q1"})
+    categories=QueryHandler.getAllCategories()
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)  # Prevent truncation of long strings (e.g., dicts)
     pd.set_option('display.width', None)
-    print("Categories with quartile Q1:", categories)
+    print("All categories:", categories[:10])
 
-    # categories = QueryHandler.getAreasAssignedToCategories({"Drug Discovery"})
-    # print("Areas assigned to categorie", categories)
+    # categories = QueryHandler.getCategoriesWithQuartile({"Q1, Q2"})
+    # pd.set_option('display.max_rows', None)
+    # pd.set_option('display.max_columns', None)
+    # pd.set_option('display.max_colwidth', None)  # Prevent truncation of long strings (e.g., dicts)
+    # pd.set_option('display.width', None)
+    # print("Categories with quartile Q1:", categories)
 
-    # areas = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
+    # areas = QueryHandler.getAreasAssignedToCategories({"Drug Discovery"})
+    # print("Areas assigned to categorie", areas)
+
+    # categories = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
     # print("Categories assigned to area", areas)
-
     # IDs = QueryHandler.getById("Electronic, Optical and Magnetic Materials")
     # print("IDs:", IDs)
 
