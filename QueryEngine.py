@@ -374,8 +374,8 @@ class FullQueryEngine(BasicQueryEngine):
         Retrieves journals in specific categories with quartiles from the journal and category query handlers.
         
         Args:
-            category_ids (list): A list of category IDs to filter journals by.
-            quartiles (list): A list of quartiles to filter journals by.
+            category_ids (set): A set of category IDs to filter journals by.
+            quartiles (set): A set of quartiles to filter journals by.
         Returns:
             list[Journal]: A list of journals in the specified categories with the specified quartiles.
         """
@@ -428,9 +428,7 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_area_l = []
                 for c in cat_l:
                     if c.getIds()[0] in category_ids:
-                        #print(c.getIds()) #this is where the issue is 
                         if j.getIds()[0] in c.getJournalQuartile().keys():
-                            #print(j.getIds()[0])
                             journal_cat_l.append(c) 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
@@ -468,8 +466,8 @@ class FullQueryEngine(BasicQueryEngine):
         Retrieves journals in specific areas with licenses from the journal and category query handlers.
 
         Args:
-            areas_ids (list): A list of area IDs to filter journals by.
-            licenses (list): A list of licenses to filter journals by. 
+            areas_ids (set): A set of area IDs to filter journals by.
+            licenses (set): A set of licenses to filter journals by. 
         Returns:
             list[Journal]: A list of journals in the specified areas with the specified licenses.
         """
@@ -513,9 +511,9 @@ class FullQueryEngine(BasicQueryEngine):
         """
         Retrieves diamond journals in specific areas and categories with quartiles from the journal and category query handlers.
         Args:
-            areas_ids (list): A list of area IDs to filter journals by.
-            category_ids (list): A list of category IDs to filter journals by.
-            quartiles (list): A list of quartiles to filter journals by.
+            areas_ids (set): A set of area IDs to filter journals by.
+            category_ids (set): A set of category IDs to filter journals by.
+            quartiles (set): A set of quartiles to filter journals by.
         Returns:
             list[Journal]: A list of diamond journals in the specified areas and categories with the specified quartiles.
         """
