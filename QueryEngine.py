@@ -1,7 +1,7 @@
 from Entities import Journal, Category, Area
 from Handlers import JournalQueryHandler, CategoryQueryHandler
 import re
-
+import pandas as pd
 
 
 class BasicQueryEngine(object):
@@ -156,7 +156,12 @@ class BasicQueryEngine(object):
             journals_df = j_queryHandler.getAllJournals()
             if not journals_df.empty:
                 for _, row in journals_df.iterrows():
-                    journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                    id = []
+                    if pd.notna(row['issn']) == True:
+                        id.append(row['issn'])
+                    if pd.notna(row['eissn']) == True:
+                        id.append(row['eissn'])
+                    journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
                     alljournals.append(journal)
         return alljournals
 
@@ -167,7 +172,12 @@ class BasicQueryEngine(object):
             journals_df = j_queryHandler.getJournalsWithTitle(partialTitle)
             if not journals_df.empty:
                 for _, row in journals_df.iterrows():
-                    journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                    id = []
+                    if pd.notna(row['issn']) == True:
+                        id.append(row['issn'])
+                    if pd.notna(row['eissn']) == True:
+                        id.append(row['eissn'])
+                    journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
                     journalsWithTitle.append(journal)
 
         return journalsWithTitle
@@ -178,7 +188,12 @@ class BasicQueryEngine(object):
             journals_df = j_queryHandler.getJournalsPublishedBy(partialName)
             if not journals_df.empty:
                 for _, row in journals_df.iterrows():
-                    journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                    id = []
+                    if pd.notna(row['issn']) == True:
+                        id.append(row['issn'])
+                    if pd.notna(row['eissn']) == True:
+                        id.append(row['eissn'])
+                    journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
                     journalsPublishedBy.append(journal)
         return journalsPublishedBy
 
@@ -188,7 +203,12 @@ class BasicQueryEngine(object):
             journals_df = j_queryHandler.getJournalsWithLicense(licenses)
             if not journals_df.empty:
                 for _, row in journals_df.iterrows():
-                    journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                    id = []
+                    if pd.notna(row['issn']) == True:
+                        id.append(row['issn'])
+                    if pd.notna(row['eissn']) == True:
+                        id.append(row['eissn'])
+                    journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
                     journalsWithLicense.append(journal)
         return journalsWithLicense
 
@@ -198,7 +218,12 @@ class BasicQueryEngine(object):
             journals_df = j_queryHandler.getJournalsWithAPC()
             if not journals_df.empty:
                 for _, row in journals_df.iterrows():
-                    journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                    id = []
+                    if pd.notna(row['issn']) == True:
+                        id.append(row['issn'])
+                    if pd.notna(row['eissn']) == True:
+                        id.append(row['eissn'])
+                    journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
                     journalsWithAPC.append(journal)
         return journalsWithAPC
 
@@ -208,7 +233,12 @@ class BasicQueryEngine(object):
             journals_df = j_queryHandler.getJournalsWithDOAJSeal()
             if not journals_df.empty:
                 for _, row in journals_df.iterrows():
-                    journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                    id = []
+                    if pd.notna(row['issn']) == True:
+                        id.append(row['issn'])
+                    if pd.notna(row['eissn']) == True:
+                        id.append(row['eissn'])
+                    journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
                     journalsWithDOAJSeal.append(journal)
         return journalsWithDOAJSeal
 
