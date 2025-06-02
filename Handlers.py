@@ -11,6 +11,7 @@ from sqlite3 import connect
 import os
 from pandas import DataFrame
 import re
+from pprint import pprint
 
 class Handler(object):
     """
@@ -834,8 +835,21 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         df = pd.DataFrame(categories, columns=["journal_id", "category_id", "quartile"])
 
         conn.close()
+
+        # reversed_df = (
+        #     df.groupby('category_id')
+        #         .agg(
+        #             quartile=('quartile', lambda x: list(x)),
+        #             journals=('journal_id', lambda x: [{'journal_id': jid, 'quartile': q} for jid, q in zip(x, df.loc[x.index, 'quartile'])])
+        #         )
+        #         .reset_index()
+        # )
+
+        result = df.groupby('category_id').apply(
+            lambda x: dict(zip(x['journal_id'], x['quartile']))
+        ).reset_index(name='journal_quartile_dict')
     
-        return df
+        return result
 
     def getAllAreas(self) -> DataFrame:
         """
@@ -907,7 +921,11 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         df = pd.DataFrame(categories, columns=["journal_id", "category_id", "quartile"])
         conn.close()
 
-        return df
+        result = df.groupby('category_id').apply(
+            lambda x: dict(zip(x['journal_id'], x['quartile']))
+        ).reset_index(name='journal_quartile_dict')
+    
+        return result
 
     def getCategoriesAssignedToAreas(self, area_ids:set[str] ) -> DataFrame:
         """
@@ -997,3 +1015,68 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
         conn.close()
         return df
     
+
+ # here we will test the method getAllCategories
+def testForCategoryQueryHandler():
+
+    UploadHandler = CategoryUploadHandler("a.db")
+    UploadHandler.pushDataToDb("./resources/scimago.json")
+    QueryHandler = CategoryQueryHandler("a.db")
+
+    areas = QueryHandler.getAllAreas()
+    print("All areas:", areas)
+
+    categories=QueryHandler.getAllCategories()
+    print("All categories:", categories)
+
+    # categories = QueryHandler.getCategoriesWithQuartile({"Q1"})
+    # print("Categories with quartile Q1 and Q2:", categories)
+
+    # categories = QueryHandler.getAreasAssignedToCategories({"Drug Discovery"})
+    # print("Areas assigned to categorie", categories)
+
+    # areas = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
+    # print("Categories assigned to area", areas)
+
+    # IDs = QueryHandler.getById("Electronic, Optical and Magnetic Materials")
+    # print("IDs:", IDs)
+
+
+ # here we will test the method getAllCategories
+def testForCategoryQueryHandler():
+
+    UploadHandler = CategoryUploadHandler("a.db")
+    UploadHandler.pushDataToDb("./resources/scimago.json")
+    QueryHandler = CategoryQueryHandler("a.db")
+
+    # areas = QueryHandler.getAllAreas()
+    # print("All areas:", areas)
+
+    # categories=QueryHandler.getAllCategories()
+    # Print all rows and columns (no truncation)
+    # pd.set_option('display.max_rows', None)
+    # pd.set_option('display.max_columns', None)
+    # pd.set_option('display.max_colwidth', None)  # Prevent truncation of long strings (e.g., dicts)
+    # pd.set_option('display.width', None)
+    # print("All categories:", categories)
+
+    categories = QueryHandler.getCategoriesWithQuartile({"Q1"})
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_colwidth', None)  # Prevent truncation of long strings (e.g., dicts)
+    pd.set_option('display.width', None)
+    print("Categories with quartile Q1:", categories)
+
+    # categories = QueryHandler.getAreasAssignedToCategories({"Drug Discovery"})
+    # print("Areas assigned to categorie", categories)
+
+    # areas = QueryHandler.getCategoriesAssignedToAreas({"Medicine"})
+    # print("Categories assigned to area", areas)
+
+    # IDs = QueryHandler.getById("Electronic, Optical and Magnetic Materials")
+    # print("IDs:", IDs)
+
+
+if __name__ == "__main__":
+    
+    testForCategoryQueryHandler()
