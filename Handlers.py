@@ -874,7 +874,11 @@ class CategoryQueryHandler(QueryHandler): #Anton and Anouk
 
         conn.close()
         
-        return df
+        result = df.groupby('area_id').apply(
+            lambda x: list(x['journal_id'])
+        ).reset_index(name='journal')
+        
+        return result
 
     def getCategoriesWithQuartile(self, quartiles:set[str]) -> DataFrame:
         """

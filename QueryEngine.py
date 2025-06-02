@@ -1,5 +1,5 @@
 from Entities import Journal, Category, Area
-from Handlers import JournalQueryHandler, CategoryQueryHandler
+from Handlers import JournalQueryHandler, CategoryQueryHandler, CategoryUploadHandler, JournalUploadHandler
 import re
 import pandas as pd
 
@@ -262,7 +262,7 @@ class BasicQueryEngine(object):
             categories_df = c_queryHandler.getAllCategories()
             if not categories_df.empty:
                 for _, row in categories_df.iterrows():
-                    category = Category([row['journal_id'], row['category_id']], row['quartile'])
+                    category = Category([row['category_id']], row['journal_quartile_dict'])
                     allCategories.append(category)
         return allCategories
 
@@ -281,7 +281,7 @@ class BasicQueryEngine(object):
             areas_df = a_queryHandler.getAllAreas()
             if not areas_df.empty:
                 for _, row in areas_df.iterrows():
-                    areas = Area([row['journal_id'], row['area_id']])
+                    areas = Area([row['area_id']], row['journal'])
                     allAreas.append(areas)
         return allAreas
 
@@ -301,7 +301,7 @@ class BasicQueryEngine(object):
             categories_df = c_queryHandler.getCategoriesWithQuartile(quartiles)
             if not categories_df.empty:
                 for _, row in categories_df.iterrows():
-                    category = Category([row['journal_id'], row['category_id']], row['quartile'])
+                    category = Category([row['category_id']], row['journal_quartile_dict'])
                     categoriesWithQuartile.append(category)
         return categoriesWithQuartile
 
@@ -321,7 +321,7 @@ class BasicQueryEngine(object):
             categories_df = c_queryHandler.getCategoriesAssignedToAreas(area_ids)
             if not categories_df.empty:
                 for _, row in categories_df.iterrows():
-                    category = Category([row['journal_id'], row['category_id']], row['quartile'])
+                    category = Category([row['category_id']], row['journal_quartile_dict'])
                     categoriesAssignedToAreas.append(category)
         return categoriesAssignedToAreas
     
@@ -341,7 +341,7 @@ class BasicQueryEngine(object):
             areas_df = c_queryHandler.getAreasAssignedToCategories(category_ids)
             if not areas_df.empty:
                 for _, row in areas_df.iterrows():
-                    area = Area([row['journal_id'], row['area_id']])
+                    area = Area([row['area_id']], row['journal'])
                     areasAssignedToCategories.append(area)
         return areasAssignedToCategories
 
@@ -647,3 +647,25 @@ class FullQueryEngine(BasicQueryEngine):
         #     return journals
             
             
+if __name__ == "__main__":
+    # Example usage
+    # UploadedJournalHandler = JournalQueryHandler("ppespp.db")
+    UploadHandler = CategoryUploadHandler("ttestt.db")
+    UploadHandler.pushDataToDb("./resources/scimago.json")
+
+    QueryHandler = CategoryQueryHandler("ttestt.db")
+
+    # Initialize the query engines
+    # These handlers should be populated with actual data retrieval logic
+
+
+    basic_query_engine = BasicQueryEngine([], [QueryHandler])
+    # full_query_engine = FullQueryEngine()
+
+    print(basic_query_engine.getAreasAssignedToCategories(["Artificial Intelligence"]))
+
+
+    # Add handlers and perform queries as needed
+    # Example: basic_query_engine.addJournalHandler(JournalQueryHandler())
+    # Example: journals = full_query_engine.getJournalsInCategoriesWithQuartile(['cat1', 'cat2'], ['Q1', 'Q2'])
+    pass
