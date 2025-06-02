@@ -388,14 +388,15 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_cat_l= []
                 journal_area_l = []
                 for c in cat_l:
-                    if j.getIds()[0] in c.getJournalQuartile().getkeys():
+                    if j.getIds()[0] in list(c.getJournalQuartile().keys()):
                         journal_cat_l.append(c) 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
                         journal_area_l.append(a)
-                j.setCategories(journal_cat_l)
-                j.setAreas(journal_area_l)
-                journals.append(j)
+                if journal_cat_l:
+                    j.setCategories(journal_cat_l)
+                    j.setAreas(journal_area_l)
+                    journals.append(j)
             return journals
         
 
@@ -407,14 +408,15 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_cat_l= []
                 journal_area_l = []
                 for c in catWithQ_l:
-                    if j.getIds()[0] in c.getJournalQuartile().getkeys():
+                    if j.getIds()[0] in c.getJournalQuartile().keys():
                         journal_cat_l.append(c) 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
-                        journal_cat_l.append(a)
-                j.setCategories(journal_cat_l)
-                j.setAreas(journal_area_l)
-                journals.append(j)
+                        journal_area_l.append(a)
+                if journal_cat_l:
+                    j.setCategories(journal_cat_l)
+                    j.setAreas(journal_area_l)
+                    journals.append(j)
             return journals
 
 
@@ -426,32 +428,38 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_area_l = []
                 for c in cat_l:
                     if c.getIds()[0] in category_ids:
-                        if j.getIds()[0] in c.getJournalQuartile().getkeys():
+                        #print(c.getIds()) #this is where the issue is 
+                        if j.getIds()[0] in c.getJournalQuartile().keys():
+                            #print(j.getIds()[0])
                             journal_cat_l.append(c) 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
-                        journal_cat_l.append(a)
-                j.setCategories(journal_cat_l)
-                j.setAreas(journal_area_l)
-                journals.append(j)
+                        journal_area_l.append(a)
+                if journal_cat_l:
+                    j.setCategories(journal_cat_l)
+                    j.setAreas(journal_area_l)
+                    journals.append(j)
             return journals
 
         else:
             catWithQ_l = self.getCategoriesWithQuartile(quartiles)
             area_l = self.getAllAreas()
+
             for j in self.getAllJournals():
                 journal_cat_l= []
                 journal_area_l = []
                 for c in catWithQ_l:
                     if c.getIds()[0] in category_ids:
-                        if j.getIds()[0] in c.getJournalQuartile().getkeys():
+                        if j.getIds()[0] in (c.getJournalQuartile().keys()):
                             journal_cat_l.append(c) 
+
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
-                        journal_cat_l.append(a)
-                j.setCategories(journal_cat_l)
-                j.setAreas(journal_area_l)
-                journals.append(j)
+                        journal_area_l.append(a)
+                if journal_cat_l:
+                    j.setCategories(journal_cat_l)
+                    j.setAreas(journal_area_l)
+                    journals.append(j)
             return journals
 
 
