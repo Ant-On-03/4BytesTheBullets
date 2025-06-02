@@ -382,31 +382,77 @@ class FullQueryEngine(BasicQueryEngine):
 
         journals = []
         if len(category_ids) == 0 and len(quartiles) == 0:
-            return self.getAllJournals()
+            cat_l = self.getAllCategories()
+            area_l = self.getAllAreas()
+            for j in self.getAllJournals():
+                journal_cat_l= []
+                journal_area_l = []
+                for c in cat_l:
+                    if j.getIds()[0] in c.getJournalQuartile().getkeys():
+                        journal_cat_l.append(c) 
+                for a in area_l:
+                    if j.getIds()[0] in a.getJournal():
+                        journal_area_l.append(a)
+                j.setCategories(journal_cat_l)
+                j.setAreas(journal_area_l)
+                journals.append(j)
+            return journals
+        
+
 
         elif len(category_ids) == 0:
-            catWithQ = self.getCategoriesWithQuartile(quartiles)
-            for cat in catWithQ:
-                j = self.getEntityById(cat.getIds()[0])
-                if j != None:
-                    journals.append(j)
+            catWithQ_l = self.getCategoriesWithQuartile(quartiles)
+            area_l = self.getAllAreas()
+            for j in self.getAllJournals():
+                journal_cat_l= []
+                journal_area_l = []
+                for c in catWithQ_l:
+                    if j.getIds()[0] in c.getJournalQuartile().getkeys():
+                        journal_cat_l.append(c) 
+                for a in area_l:
+                    if j.getIds()[0] in a.getJournal():
+                        journal_cat_l.append(a)
+                j.setCategories(journal_cat_l)
+                j.setAreas(journal_area_l)
+                journals.append(j)
+            return journals
+
 
         elif len(quartiles) == 0:
-            categories = self.getAllCategories()
-            for cat in categories:
-                j = self.getEntityById(cat.getIds()[0])
-                if j != None:
-                    journals.append(j)
+            cat_l = self.getAllCategories()
+            area_l = self.getAllAreas()
+            for j in self.getAllJournals():
+                journal_cat_l= []
+                journal_area_l = []
+                for c in cat_l:
+                    if c.getIds()[0] in category_ids:
+                        if j.getIds()[0] in c.getJournalQuartile().getkeys():
+                            journal_cat_l.append(c) 
+                for a in area_l:
+                    if j.getIds()[0] in a.getJournal():
+                        journal_cat_l.append(a)
+                j.setCategories(journal_cat_l)
+                j.setAreas(journal_area_l)
+                journals.append(j)
+            return journals
 
         else:
-            catWithQ = self.getCategoriesWithQuartile(quartiles)
-            for cat in catWithQ:
-                if cat.getIds()[1] in category_ids:
-                    j = self.getEntityById(cat.getIds()[0])
-                    if j != None:
-                        journals.append(j)
-
-        return journals
+            catWithQ_l = self.getCategoriesWithQuartile(quartiles)
+            area_l = self.getAllAreas()
+            for j in self.getAllJournals():
+                journal_cat_l= []
+                journal_area_l = []
+                for c in catWithQ_l:
+                    if c.getIds()[0] in category_ids:
+                        if j.getIds()[0] in c.getJournalQuartile().getkeys():
+                            journal_cat_l.append(c) 
+                for a in area_l:
+                    if j.getIds()[0] in a.getJournal():
+                        journal_cat_l.append(a)
+                j.setCategories(journal_cat_l)
+                j.setAreas(journal_area_l)
+                journals.append(j)
+            return journals
 
 
     def getJournalsInAreasWithLicense(self, areas_ids, licenses) -> list[Journal]:
