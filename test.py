@@ -29,7 +29,11 @@ class TestProjectBasic(unittest.TestCase):
     # specified the URL introduced during the course, which is the one used for a standard
     # launch of the database.
     journal = "resources" + sep + "test_doaj.csv"
+<<<<<<< HEAD
+    category = "resources" + sep + "scimago.json"
+=======
     category = "resources" + sep + "test_scimago.json"
+>>>>>>> c5e9f52df3e96cd0a5e63ebe7abf073fad8d4cbe
     relational = "." + sep + "relational.db" 
     graph = "http://127.0.0.1:9999/blazegraph/sparql"
 
