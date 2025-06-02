@@ -112,7 +112,7 @@ class BasicQueryEngine(object):
                         cat_l = []
                         area_l = []
                         for _, row in categoryWithId_df.iterrows():
-                            category = Category([row['issn'], row['eissn'], row['category_id']], row['quartile'])
+                            category = Category([row['category_id']])
                             area = Area(row['area_id'])
                             cat_l.append(category)
                             area_l.append(area)
