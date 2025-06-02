@@ -96,7 +96,12 @@ class BasicQueryEngine(object):
                 journalWithId_df = j_queryHandler.getById(id)
                 if not journalWithId_df.empty:
                     for _, row in journalWithId_df.iterrows():
-                        journal = Journal([row['issn'],row['eissn']], row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                        id = []
+                        if pd.notna(row['issn']) == True:
+                            id.append(row['issn'])
+                        if pd.notna(row['eissn']) == True:
+                            id.append(row['eissn'])
+                        journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
                 else:
                     journal = None
 
