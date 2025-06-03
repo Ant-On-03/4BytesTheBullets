@@ -388,7 +388,7 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_cat_l= []
                 journal_area_l = []
                 for c in cat_l:
-                    if j.getIds()[0] in list(c.getJournalQuartile().keys()):
+                    if j.getIds()[0] in c.getJournalQuartile().keys():
                         journal_cat_l.append(c) 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
@@ -473,38 +473,77 @@ class FullQueryEngine(BasicQueryEngine):
         """
         journals = []
         if len(areas_ids) == 0 and len(licenses) == 0:
-            return self.getAllJournals()
+            cat_l = self.getAllCategories()
+            area_l = self.getAllAreas()
+            for j in self.getAllJournals():
+                journal_cat_l= []
+                journal_area_l = []
+                for c in cat_l:
+                    if j.getIds()[0] in c.getJournalQuartile().keys():
+                        journal_cat_l.append(c) 
+                for a in area_l:
+                    if j.getIds()[0] in a.getJournal():
+                        journal_area_l.append(a)
+                if journal_cat_l:
+                    j.setCategories(journal_cat_l)
+                    j.setAreas(journal_area_l)
+                    journals.append(j)
+            return journals
         
         elif len(areas_ids) == 0:
-            return self.getJournalsWithLicense(licenses)
+            cat_l = self.getAllCategories()
+            area_l = self.getAllAreas()
+            for j in self.getJournalsWithLicense(licenses):
+                journal_cat_l= []
+                journal_area_l = []
+                for c in cat_l:
+                    if j.getIds()[0] in c.getJournalQuartile().keys():
+                        journal_cat_l.append(c) 
+                for a in area_l:
+                    if j.getIds()[0] in a.getJournal():
+                        journal_area_l.append(a)
+                if journal_cat_l:
+                    j.setCategories(journal_cat_l)
+                    j.setAreas(journal_area_l)
+                    journals.append(j)
+            return journals
         
         elif len(licenses) == 0:
-            # Iterate over all journals
+            cat_l = self.getAllCategories()
+            area_l = self.getAllAreas()
             for j in self.getAllJournals():
-                # Iterate over all areas
-                for a in areas:
-                    # Check if the journal that has this area is also in the list of journals
-                    if a.getIds()[0] in j.getIds():
-                        j.setAreas(list(a))
-                        journals.append(j)
+                journal_cat_l= []
+                journal_area_l = []
+                for c in cat_l:
+                    if j.getIds()[0] in c.getJournalQuartile().keys():
+                        journal_cat_l.append(c) 
+                for a in area_l:
+                    if a.getIds()[0] in areas_ids:
+                        if j.getIds()[0] in a.getJournal():
+                            journal_area_l.append(a)
+                if journal_cat_l and journal_area_l:
+                    j.setCategories(journal_cat_l)
+                    j.setAreas(journal_area_l)
+                    journals.append(j)
+            return journals
+
         else:
-            jWithLicenses = self.getJournalsWithLicense(licenses)
-            areas = []
-            # We treat areas as a weak entity, getAllAreas are going to retrieve the areas that are assigned to the journals
-            for area in self.getAllAreas():
-                # Check if the area is in the specified areas (areas_ids)
-                if area.getIds()[1] in areas_ids:
-                    # Create a list to store those areas to be used later for the intersection license x areas
-                    areas.append(area)
-            
-            # Now we pick the intersection between the journals with licenses and the areas
-            # We "pick" those journals that are in both lists (that one with all journals in the areas and the one with all the journals with the licenses)
-            for j in jWithLicenses:
-                for a in areas:
-                    if a.getIds()[0] in j.getIds():
-                        j.setAreas([a])
-                        journals.append(j)
-            
+            cat_l = self.getAllCategories()
+            area_l = self.getAllAreas()
+            for j in self.getJournalsWithLicense(licenses):
+                journal_cat_l= []
+                journal_area_l = []
+                for c in cat_l:
+                    if j.getIds()[0] in c.getJournalQuartile().keys():
+                        journal_cat_l.append(c) 
+                for a in area_l:
+                    if a.getIds()[0] in areas_ids:
+                        if j.getIds()[0] in a.getJournal():
+                            journal_area_l.append(a)
+                if journal_cat_l and journal_area_l:
+                    j.setCategories(journal_cat_l)
+                    j.setAreas(journal_area_l)
+                    journals.append(j)
             return journals
 
     def getDiamondJournalsInAreasAndCategoriesWithQuartile(self, areas_ids, category_ids, quartiles) -> list[Journal]:

@@ -13,7 +13,15 @@ class Journal(IdentifiableEntity):
     """Class representing a journal.
     
     Attributes:
-    
+    id (list[string]): The ISSN and/or EISSN ID of the journal
+    title (string): The title of the journal 
+    languages (string): The languages in which the journal is published
+    seal (bool): A boolean to state whether the journal has a DOAJ seal 
+    license (string): The licenses the journal has
+    apc (bool): A boolean to state whether the Article Processing Charge (APC) has been paid for the journal 
+    publisher (string): The institution which publishes the journal 
+    category (list[Category]): The categories which the journal is published under
+    area (list[Area]): The areas which the journal is published under
      
     """
     def __init__(self, id, title, languages, seal, license, apc, publisher = None):
@@ -70,15 +78,27 @@ class Journal(IdentifiableEntity):
         return self.area
 
 class Category(IdentifiableEntity):
+    """Class representing a category.
+    
+    Attributes:
+    id (string): The name of the category 
+    quartile (string): The quartile in which this category appears (based on the journals published under the category)
+    journal_quartile (dict): A dictionary of journal:quartile pairs related to the category 
+     
+    """
     def __init__(self, id, journal_quartile:dict  = {}):
         self.journal_quartile = journal_quartile
+        self.quartile = None
         super().__init__(id)
 
     def __repr__(self):
-        return f"Category({self.id})"
+        return f"Category({self.id}, {self.quartile})"
     
     def __str__(self):
-        return f"Category({self.id})"
+        return f"Category({self.id}, {self.quartile})"
+    
+    def getQuartile(self):
+        return self.quartile
     
     def setJournalQuartile(self, journal_quartile):
         self.journal_quartile = journal_quartile
@@ -89,6 +109,13 @@ class Category(IdentifiableEntity):
     
     
 class Area(IdentifiableEntity):
+    """Class representing a category.
+    
+    Attributes:
+    id (string): The name of the area 
+    journal (list): The list of journals published under the area 
+     
+    """
     def __init__(self, id, journal = []):
         self.journal = journal
         super().__init__(id)
