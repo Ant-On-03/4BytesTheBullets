@@ -100,14 +100,14 @@ class BasicQueryEngine(object):
                 if not journalWithId_df.empty:
 
                     for _, row in journalWithId_df.iterrows():
-                        id = []
+                        id_list = []
                         if pd.notna(row['issn']) == True:
-                            id.append(row['issn'])
+                            id_list.append(row['issn'])
                         if pd.notna(row['eissn']) == True:
-                            id.append(row['eissn'])
+                            id_list.append(row['eissn'])
 
                         found_journal = True
-                        journal = Journal(id, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
+                        journal = Journal(id_list, row['title'], row['language'], row['seal'], row['license'], row['apc'], row['publisher'])
                 
             if found_journal:
                 for c_queryHandler in self.categoryQuery:
