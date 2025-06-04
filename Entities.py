@@ -86,9 +86,9 @@ class Category(IdentifiableEntity):
     journal_quartile (dict): A dictionary of journal:quartile pairs related to the category 
      
     """
-    def __init__(self, id, journal_quartile:dict  = {}):
+    def __init__(self, id, journal_quartile:dict  = {}, quartile = None):
         self.journal_quartile = journal_quartile
-        self.quartile = None
+        self.quartile = quartile
         super().__init__(id)
 
     def __repr__(self):
@@ -100,6 +100,10 @@ class Category(IdentifiableEntity):
     def getQuartile(self):
         return self.quartile
     
+    def setQuartile(self, newQuartile):
+        self.quartile = newQuartile
+        return True
+    
     def setJournalQuartile(self, journal_quartile):
         self.journal_quartile = journal_quartile
         return True
@@ -107,6 +111,18 @@ class Category(IdentifiableEntity):
     def getJournalQuartile(self):
         return self.journal_quartile
     
+
+     
+    def getQuartileWithJournal(self, journal_id):
+        return self.journal_quartile[journal_id]
+    
+
+    def setQuartileWithJournal(self, journal_id):
+        self.setQuartile(self.getQuartileWithJournal(journal_id))
+        return True
+
+    
+
     
 class Area(IdentifiableEntity):
     """Class representing a category.
