@@ -580,7 +580,7 @@ class FullQueryEngine(BasicQueryEngine):
                 
                 for c in cat_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds[0])
+                        c.setQuartileWithJournal(j.getIds()[0])
                         journal_cat_l.append(c)
                 
                 for a in area_l:
@@ -604,7 +604,7 @@ class FullQueryEngine(BasicQueryEngine):
                 
                 for c in catWithQ_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds[0])
+                        c.setQuartileWithJournal(j.getIds()[0])
                         journal_cat_l.append(c)
                 
                 for a in area_l:
