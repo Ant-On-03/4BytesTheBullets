@@ -1070,7 +1070,26 @@ def testForCategoryQueryHandler():
     pd.set_option('display.max_columns', None)
     pd.set_option('display.max_colwidth', None)  # Prevent truncation of long strings (e.g., dicts)
     pd.set_option('display.width', None)
-    print("All categories:", categories[:10])
+    # print("All categories:", categories[:10])
+
+    # Now we are going to search for the specific case of the category "Oncology" and print its details. We are gonna find oncology in the categories dataframe.
+    oncology_category = categories[categories['category_id'] == "Cancer Research"]
+    # print(oncology_category)
+
+    # now we look for the journal 2468-2942 in the oncology category
+
+    journal_2468_2942_in_oncology = oncology_category['journal_quartile_dict'].iloc[0].get("2468-2942", None)
+    print("Journal 2468-2942 in Oncology category:", journal_2468_2942_in_oncology)
+
+
+
+
+    #categories
+    #Oncology
+    #Cancer Research
+
+    #2468-2942
+
 
     # categories = QueryHandler.getCategoriesWithQuartile({"Q1, Q2"})
     # pd.set_option('display.max_rows', None)

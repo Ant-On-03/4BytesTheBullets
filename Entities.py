@@ -118,7 +118,8 @@ class Category(IdentifiableEntity):
     
 
     def setQuartileWithJournal(self, journal_id):
-        self.setQuartile(self.getQuartileWithJournal(journal_id))
+        # self.setQuartile(self.getQuartileWithJournal(journal_id))
+        self.quartile = self.journal_quartile[journal_id] 
         return True
     
     def clean(self):
