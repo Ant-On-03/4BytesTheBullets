@@ -120,7 +120,10 @@ class Category(IdentifiableEntity):
     def setQuartileWithJournal(self, journal_id):
         self.setQuartile(self.getQuartileWithJournal(journal_id))
         return True
-
+    
+    def clean(self):
+        self.journal_quartile = None
+        return True
     
 
     
