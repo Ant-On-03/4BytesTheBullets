@@ -389,8 +389,7 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_area_l = []
                 for c in cat_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])
-                        journal_cat_l.append(c) 
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
                         journal_area_l.append(a)
@@ -410,8 +409,7 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_area_l = []
                 for c in catWithQ_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])
-                        journal_cat_l.append(c) 
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0]))) 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
                         journal_area_l.append(a)
@@ -431,8 +429,7 @@ class FullQueryEngine(BasicQueryEngine):
                 for c in cat_l:
                     if c.getIds()[0] in category_ids:
                         if j.getIds()[0] in c.getJournalQuartile().keys():
-                            c.setQuartileWithJournal(j.getIds()[0])                            
-                            journal_cat_l.append(c) 
+                            journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))    
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
                         journal_area_l.append(a)
@@ -452,8 +449,7 @@ class FullQueryEngine(BasicQueryEngine):
                 for c in catWithQ_l:
                     if c.getIds()[0] in category_ids:
                         if j.getIds()[0] in c.getJournalQuartile().keys():
-                            c.setQuartileWithJournal(j.getIds()[0])
-                            journal_cat_l.append(c) 
+                            journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0]))) 
 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
@@ -484,8 +480,7 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_area_l = []
                 for c in cat_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])
-                        journal_cat_l.append(c) 
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0]))) 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
                         journal_area_l.append(a)
@@ -503,8 +498,7 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_area_l = []
                 for c in cat_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])                        
-                        journal_cat_l.append(c) 
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0]))) 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
                         journal_area_l.append(a)
@@ -522,8 +516,7 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_area_l = []
                 for c in cat_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])                        
-                        journal_cat_l.append(c) 
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0]))) 
                 for a in area_l:
                     if a.getIds()[0] in areas_ids:
                         if j.getIds()[0] in a.getJournal():
@@ -542,8 +535,7 @@ class FullQueryEngine(BasicQueryEngine):
                 journal_area_l = []
                 for c in cat_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])                        
-                        journal_cat_l.append(c) 
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0]))) 
                 for a in area_l:
                     if a.getIds()[0] in areas_ids:
                         if j.getIds()[0] in a.getJournal():
@@ -580,8 +572,7 @@ class FullQueryEngine(BasicQueryEngine):
                 
                 for c in cat_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])
-                        journal_cat_l.append(c)
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
@@ -604,8 +595,7 @@ class FullQueryEngine(BasicQueryEngine):
                 
                 for c in catWithQ_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])
-                        journal_cat_l.append(c)
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
@@ -631,8 +621,7 @@ class FullQueryEngine(BasicQueryEngine):
                 for c in cat_l:
                     if c.getIds()[0] in category_ids:
                         if j.getIds()[0] in c.getJournalQuartile().keys():
-                            c.setQuartileWithJournal(j.getIds()[0])
-                            journal_cat_l.append(c)
+                            journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 
                 # Get areas for this journal
                 for a in area_l:
@@ -658,8 +647,7 @@ class FullQueryEngine(BasicQueryEngine):
                 # Get categories for this journal
                 for c in cat_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])
-                        journal_cat_l.append(c)
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 
                 # Get areas for this journal
                 for a in area_l:
@@ -685,8 +673,7 @@ class FullQueryEngine(BasicQueryEngine):
                 for c in catWithQ_l:
                     if c.getIds()[0] in category_ids:
                         if j.getIds()[0] in c.getJournalQuartile().keys():
-                            c.setQuartileWithJournal(j.getIds()[0])
-                            journal_cat_l.append(c)
+                            journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 
                 for a in area_l:
                     if j.getIds()[0] in a.getJournal():
@@ -710,8 +697,7 @@ class FullQueryEngine(BasicQueryEngine):
                 for c in cat_l:
                     if c.getIds()[0] in category_ids:
                         if j.getIds()[0] in c.getJournalQuartile().keys():
-                            c.setQuartileWithJournal(j.getIds()[0])
-                            journal_cat_l.append(c)
+                            journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 
                 for a in area_l:
                     if a.getIds()[0] in areas_ids:
@@ -735,8 +721,7 @@ class FullQueryEngine(BasicQueryEngine):
                 
                 for c in catWithQ_l:
                     if j.getIds()[0] in c.getJournalQuartile().keys():
-                        c.setQuartileWithJournal(j.getIds()[0])
-                        journal_cat_l.append(c)
+                        journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 
                 for a in area_l:
                     if a.getIds()[0] in areas_ids:
@@ -761,8 +746,7 @@ class FullQueryEngine(BasicQueryEngine):
                 for c in catWithQ_l:
                     if c.getIds()[0] in category_ids:
                         if j.getIds()[0] in c.getJournalQuartile().keys():
-                            c.setQuartileWithJournal(j.getIds()[0])
-                            journal_cat_l.append(c)
+                            journal_cat_l.append(Category(c.getIds(), quartile=c.getQuartileWithJournal(j.getIds()[0])))
                 
                 for a in area_l:
                     if a.getIds()[0] in areas_ids:
@@ -776,64 +760,3 @@ class FullQueryEngine(BasicQueryEngine):
             return journals
 
                 
-        # else:
-
-        #     if len(category_ids) == 0 or len(quartiles) == 0:
-        #         jInCatWithQ_l = self.getAllCategories()
-                
-        #     else:
-        #         jInCatWithQ_l = self.getJournalsInCategoriesWithQuartile(category_ids, quartiles)
-
-        #     #find all specified areas
-
-        #     if len(areas_ids) == 0:
-        #         areas = self.getAllAreas()
-
-        #     else:
-        #         areas = []
-        #         for area in self.getAllAreas():
-        #             if area.getIds()[1] in areas_ids:
-        #                 areas.append(area)
-
-
-
-        #     #find all journals with APC in specified areas
-        #     jInAreas_l = []
-        #     for j in diamondJournals:
-        #         for a in areas:
-        #             if a.getIds()[0] in j.getIds():
-        #                 j.setAreas([a])
-        #                 jInAreas_l.append(j)
-
-        #     #find all journals with APC in specified areas in category with quartile
-
-        #     for j in jInAreas_l:
-        #         for jCat in jInCatWithQ_l:
-        #             if j.getIds() == jCat.getIds():
-        #                 journals.append(j)
-
-        #     return journals
-            
-            
-if __name__ == "__main__":
-    # Example usage
-    # UploadedJournalHandler = JournalQueryHandler("ppespp.db")
-    UploadHandler = CategoryUploadHandler("ttestt.db")
-    UploadHandler.pushDataToDb("./resources/scimago.json")
-
-    QueryHandler = CategoryQueryHandler("ttestt.db")
-
-    # Initialize the query engines
-    # These handlers should be populated with actual data retrieval logic
-
-
-    basic_query_engine = BasicQueryEngine([], [QueryHandler])
-    # full_query_engine = FullQueryEngine()
-
-    print(basic_query_engine.getAreasAssignedToCategories(["Artificial Intelligence"]))
-
-
-    # Add handlers and perform queries as needed
-    # Example: basic_query_engine.addJournalHandler(JournalQueryHandler())
-    # Example: journals = full_query_engine.getJournalsInCategoriesWithQuartile(['cat1', 'cat2'], ['Q1', 'Q2'])
-    pass
