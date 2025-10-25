@@ -1,5 +1,5 @@
 ## About the Project
-This is the repository for the final project of the Data Science module, part of the integrated course Computational Management of Data (I.C.) for the 2024/2025 academic year, in the Master's Degree of [Digital Humanities and Digital Knowledge](https://corsi.unibo.it/2cycle/DigitalHumanitiesKnowledge) program at the University of Bologna. The images below originate from the [github repository](https://github.com/comp-data/2024-2025/tree/main/docs/project) that describes the requirements of the project.
+This is the repository for the final project of the Data Science module, part of the integrated course Computational Management of Data (I.C.) with Professor [Silvio Peroni](https://www.unibo.it/sitoweb/silvio.peroni/en) for the 2024/2025 academic year, in the Master's Degree of [Digital Humanities and Digital Knowledge](https://corsi.unibo.it/2cycle/DigitalHumanitiesKnowledge) program at the University of Bologna. The images below originate from the [github repository](https://github.com/comp-data/2024-2025/tree/main/docs/project) that describes the requirements of the project.
 
 ## Workflow
 <img width="2272" height="988" alt="image" src="https://github.com/user-attachments/assets/10d4c6de-4421-4b38-baa6-9ec4b5212e1b" />
